@@ -10,6 +10,7 @@ export interface IDictation extends Document {
   score: number; // 得分（百分制）
   wrongWords: mongoose.Types.ObjectId[]; // 错题ID数组
   dictationTime: Date;
+  mode: string; // 默写模式：en-默写英文, cn-默写中文, fill-字母填空
   updateTime: Date;
 }
 
@@ -52,6 +53,12 @@ const DictationSchema: Schema = new Schema(
       required: true,
       default: [],
       ref: 'Word',
+    },
+    mode: {
+      type: String,
+      required: false,
+      default: 'en',
+      enum: ['en', 'cn', 'fill'],
     },
     dictationTime: {
       type: Date,

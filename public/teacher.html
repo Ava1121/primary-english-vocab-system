@@ -99,6 +99,16 @@
       margin-bottom: 5px;
     }
     
+    /* 默写模式选择样式 */
+    .mode-option input:checked + .mode-card {
+      border-color: var(--primary-color);
+      background-color: rgba(74, 144, 226, 0.1);
+    }
+    
+    .mode-option:hover .mode-card {
+      border-color: var(--primary-color);
+    }
+    
     .teach-title-left p {
       color: var(--text-secondary);
       font-size: 13px;
@@ -712,6 +722,38 @@
           <label class="form-label">选择学生</label>
           <select class="form-select" id="dictationStudentId" required></select>
         </div>
+        
+        <!-- 默写模式选择 -->
+        <div class="form-group">
+          <label class="form-label">默写模式</label>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <label class="mode-option" style="flex: 1; min-width: 150px; cursor: pointer;">
+              <input type="radio" name="dictationMode" value="en" checked style="display: none;">
+              <div class="mode-card" style="padding: 15px; border: 2px solid var(--border-color); border-radius: 8px; text-align: center; transition: all 0.3s;">
+                <div style="font-size: 24px; margin-bottom: 5px;">📝</div>
+                <div style="font-weight: 600;">默写英文</div>
+                <div style="font-size: 12px; color: var(--text-secondary);">看中文写英文</div>
+              </div>
+            </label>
+            <label class="mode-option" style="flex: 1; min-width: 150px; cursor: pointer;">
+              <input type="radio" name="dictationMode" value="cn" style="display: none;">
+              <div class="mode-card" style="padding: 15px; border: 2px solid var(--border-color); border-radius: 8px; text-align: center; transition: all 0.3s;">
+                <div style="font-size: 24px; margin-bottom: 5px;">🇨🇳</div>
+                <div style="font-weight: 600;">默写中文</div>
+                <div style="font-size: 12px; color: var(--text-secondary);">看英文写中文</div>
+              </div>
+            </label>
+            <label class="mode-option" style="flex: 1; min-width: 150px; cursor: pointer;">
+              <input type="radio" name="dictationMode" value="fill" style="display: none;">
+              <div class="mode-card" style="padding: 15px; border: 2px solid var(--border-color); border-radius: 8px; text-align: center; transition: all 0.3s;">
+                <div style="font-size: 24px; margin-bottom: 5px;">🔤</div>
+                <div style="font-weight: 600;">字母填空</div>
+                <div style="font-size: 12px; color: var(--text-secondary);">补全缺失字母</div>
+              </div>
+            </label>
+          </div>
+        </div>
+        
         <div class="config-row">
           <div class="form-group">
             <label class="form-label">选择年级</label>
@@ -745,8 +787,24 @@
       <!-- 默写界面 -->
       <div class="dictation-container" id="dictationContainer" style="display: none; max-width: 600px; margin: 50px auto;">
         <div class="card" style="padding: 40px; text-align: center;">
+          <!-- 模式标签 -->
+          <div style="margin-bottom: 15px;">
+            <span id="dictationModeLabel" style="background: var(--primary-color); color: white; padding: 5px 15px; border-radius: 20px; font-size: 14px;">📝 默写英文</span>
+          </div>
           <h2>第 <span id="dictationCurrentNum">1</span> / <span id="dictationTotalNum">10</span> 题</h2>
-          <div style="font-size: 36px; font-weight: bold; margin: 30px 0;" id="dictationCn">苹果</div>
+          
+          <!-- 题目显示区域 -->
+          <div id="dictationQuestionArea" style="margin: 30px 0;">
+            <div style="font-size: 36px; font-weight: bold;" id="dictationQuestion">苹果</div>
+            <div style="font-size: 16px; color: var(--text-secondary); margin-top: 10px;" id="dictationHint"></div>
+          </div>
+          
+          <!-- 填空模式的特殊显示 -->
+          <div id="dictationFillArea" style="display: none; margin: 30px 0;">
+            <div style="font-size: 48px; font-weight: bold; font-family: monospace; letter-spacing: 8px;" id="dictationFillWord">a_p_e</div>
+            <div style="font-size: 14px; color: var(--text-secondary); margin-top: 15px;" id="dictationFillHint">请填写缺失的字母</div>
+          </div>
+          
           <input type="text" class="form-input" id="dictationInput" placeholder="请输入英文单词" style="font-size: 18px; padding: 15px; text-align: center;" autofocus>
           <div style="margin-top: 20px;">
             <button class="btn btn-primary" style="padding: 15px 50px; font-size: 16px;" onclick="submitDictationAnswer()">确定</button>

@@ -20,6 +20,8 @@ let currentFilter = 'all';
 let dictationWords = [];
 let dictationIndex = 0;
 let dictationAnswers = [];
+let dictationMode = 'en'; // 默认模式：en-默写英文, cn-默写中文, fill-字母填空
+let dictationFillData = []; // 填空模式的题目数据
 
 // 切换标签页
 function switchTab(tabName) {
@@ -577,9 +579,15 @@ async function initDictation() {
 async function loadDictationHistory(studentId) {
   const res = await http.get(`/teacher/dictation/list?studentId=${studentId}&page=1&size=5`);
   if (res.code === 200 && res.data.list.length > 0) {
-    let html = '<table class="table"><thead><tr><th>时间</th><th>年级</th><th>题数</th><th>得分</th></tr></thead><tbody>';
+    let html = '<table class="table"><thead><tr><th>时间</th><th>模式</th><th>年级</th><th>题数</th><th>得分</th></tr></thead><tbody>';
     res.data.list.forEach(d => {
-      html += `<tr><td>${formatDate(d.dictationTime)}</td><td>${gradeMap[d.grade]}</td><td>${d.totalNum}</td><td>${d.score}</td></tr>`;
+      const modeLabels = {
+        'en': '📝 英文',
+        'cn': '🇨🇳 中文',
+        'fill': '🔤 填空'
+      };
+      const modeText = modeLabels[d.mode] || '📝 英文';
+      html += `<tr><td>${formatDate(d.dictationTime)}</td><td>${modeText}</td><td>${gradeMap[d.grade]}</td><td>${d.totalNum}</td><td>${d.score}</td></tr>`;
     });
     html += '</tbody></table>';
     document.getElementById('dictationHistory').innerHTML = html;
@@ -592,6 +600,10 @@ async function startDictation() {
   const studentId = document.getElementById('dictationStudentId').value;
   const grade = parseInt(document.getElementById('dictationGrade').value);
   const num = parseInt(document.getElementById('dictationNum').value);
+  
+  // 获取选择的默写模式
+  const modeRadio = document.querySelector('input[name="dictationMode"]:checked');
+  dictationMode = modeRadio ? modeRadio.value : 'en';
   
   if (!studentId) {
     showToast('请选择学生', 'error');
@@ -606,6 +618,14 @@ async function startDictation() {
     dictationWords = res.data;
     dictationIndex = 0;
     dictationAnswers = [];
+    dictationFillData = [];
+    
+    // 如果是填空模式，预生成填空数据
+    if (dictationMode === 'fill') {
+      dictationWords.forEach(word => {
+        dictationFillData.push(generateFillBlank(word.en));
+      });
+    }
     
     document.querySelector('.config-panel').style.display = 'none';
     document.getElementById('dictationContainer').style.display = 'block';
@@ -617,12 +637,103 @@ async function startDictation() {
   }
 }
 
+// 生成填空题目：随机替换字母为下划线
+function generateFillBlank(word) {
+  const letters = word.split('');
+  const len = letters.length;
+  
+  // 计算需要隐藏的字母数量（30%-50%的字母）
+  const hideCount = Math.max(1, Math.floor(len * (0.3 + Math.random() * 0.2)));
+  
+  // 随机选择要隐藏的位置（优先隐藏元音和辅音）
+  const positions = [];
+  const vowels = ['a', 'e', 'i', 'o', 'u'];
+  
+  // 先收集元音位置
+  const vowelPositions = [];
+  const consonantPositions = [];
+  letters.forEach((letter, index) => {
+    if (vowels.includes(letter.toLowerCase())) {
+      vowelPositions.push(index);
+    } else if (/[a-z]/i.test(letter)) {
+      consonantPositions.push(index);
+    }
+  });
+  
+  // 随机打乱
+  vowelPositions.sort(() => Math.random() - 0.5);
+  consonantPositions.sort(() => Math.random() - 0.5);
+  
+  // 优先选择元音，然后选择辅音
+  const allPositions = [...vowelPositions, ...consonantPositions];
+  for (let i = 0; i < hideCount && i < allPositions.length; i++) {
+    positions.push(allPositions[i]);
+  }
+  
+  // 生成填空后的显示和答案
+  const display = letters.map((letter, index) => 
+    positions.includes(index) ? '_' : letter
+  ).join('');
+  
+  const hiddenLetters = positions.map(index => letters[index]);
+  
+  return {
+    display,
+    hiddenLetters,
+    positions,
+    answer: hiddenLetters.join('')
+  };
+}
+
 function showDictationQuestion() {
+  const currentWord = dictationWords[dictationIndex];
+  
+  // 更新题号
   document.getElementById('dictationCurrentNum').textContent = dictationIndex + 1;
   document.getElementById('dictationTotalNum').textContent = dictationWords.length;
-  document.getElementById('dictationCn').textContent = dictationWords[dictationIndex].cn;
-  document.getElementById('dictationInput').value = '';
-  document.getElementById('dictationInput').focus();
+  
+  // 更新模式标签
+  const modeLabels = {
+    'en': '📝 默写英文',
+    'cn': '🇨🇳 默写中文',
+    'fill': '🔤 字母填空'
+  };
+  document.getElementById('dictationModeLabel').textContent = modeLabels[dictationMode];
+  
+  const questionArea = document.getElementById('dictationQuestionArea');
+  const fillArea = document.getElementById('dictationFillArea');
+  const input = document.getElementById('dictationInput');
+  
+  // 根据模式显示不同的题目
+  if (dictationMode === 'en') {
+    // 默写英文模式：显示中文，输入英文
+    questionArea.style.display = 'block';
+    fillArea.style.display = 'none';
+    document.getElementById('dictationQuestion').textContent = currentWord.cn;
+    document.getElementById('dictationHint').textContent = '请输入对应的英文单词';
+    input.placeholder = '请输入英文单词';
+  } else if (dictationMode === 'cn') {
+    // 默写中文模式：显示英文，输入中文
+    questionArea.style.display = 'block';
+    fillArea.style.display = 'none';
+    document.getElementById('dictationQuestion').textContent = currentWord.en;
+    document.getElementById('dictationHint').textContent = '请输入对应的中文意思';
+    input.placeholder = '请输入中文意思';
+  } else if (dictationMode === 'fill') {
+    // 字母填空模式：显示带下划线的单词
+    questionArea.style.display = 'block';
+    fillArea.style.display = 'block';
+    
+    const fillData = dictationFillData[dictationIndex];
+    document.getElementById('dictationQuestion').textContent = currentWord.cn;
+    document.getElementById('dictationHint').textContent = `完整单词: ${currentWord.en}`;
+    document.getElementById('dictationFillWord').textContent = fillData.display;
+    document.getElementById('dictationFillHint').textContent = `请按顺序填写 ${fillData.hiddenLetters.length} 个缺失的字母`;
+    input.placeholder = `请输入缺失的字母（${fillData.hiddenLetters.length}个）`;
+  }
+  
+  input.value = '';
+  input.focus();
 }
 
 function submitDictationAnswer() {
@@ -633,10 +744,19 @@ function submitDictationAnswer() {
     return;
   }
   
-  dictationAnswers.push({
+  // 根据模式构建不同的答案数据
+  const answerData = {
     wordId: dictationWords[dictationIndex]._id,
-    answer
-  });
+    answer,
+    mode: dictationMode
+  };
+  
+  // 填空模式额外存储正确答案
+  if (dictationMode === 'fill') {
+    answerData.correctFillAnswer = dictationFillData[dictationIndex].answer;
+  }
+  
+  dictationAnswers.push(answerData);
   
   dictationIndex++;
   
@@ -663,7 +783,8 @@ async function finishDictation() {
     studentId: currentStudentId,
     grade: currentGrade,
     totalNum: dictationWords.length,
-    answers: dictationAnswers
+    answers: dictationAnswers,
+    mode: dictationMode
   });
   
   if (res.code === 200) {
@@ -682,6 +803,9 @@ async function finishDictation() {
     } else {
       document.getElementById('dictationWrongList').innerHTML = '<p style="text-align: center; color: var(--primary-color);">🎉 全部正确！</p>';
     }
+    
+    // 刷新历史记录
+    loadDictationHistory(currentStudentId);
   } else {
     showToast(res.msg, 'error');
   }

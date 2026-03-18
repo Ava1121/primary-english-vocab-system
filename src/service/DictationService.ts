@@ -25,7 +25,8 @@ export class DictationService {
     teacherId: string,
     grade: number,
     totalNum: number,
-    answers: Array<{ wordId: string; answer: string }>
+    answers: Array<{ wordId: string; answer: string; mode?: string; correctFillAnswer?: string }>,
+    mode: string = 'en'
   ) {
     // 获取正确答案
     const wordIds = answers.map((a) => new mongoose.Types.ObjectId(a.wordId));
@@ -37,19 +38,38 @@ export class DictationService {
       wordMap.set(word._id.toString(), word);
     });
 
-    // 判分（大小写不敏感）
+    // 判分（根据模式不同判断方式不同）
     let correctNum = 0;
     const wrongWords: string[] = [];
 
-    answers.forEach((answer) => {
-      const word = wordMap.get(answer.wordId);
+    answers.forEach((answerData) => {
+      const word = wordMap.get(answerData.wordId);
       if (word) {
-        // 转为小写比较
-        if (word.en.toLowerCase() === answer.answer.toLowerCase().trim()) {
+        const answerMode = answerData.mode || mode;
+        let isCorrect = false;
+
+        if (answerMode === 'en') {
+          // 默写英文模式：比较英文（大小写不敏感）
+          isCorrect = word.en.toLowerCase() === answerData.answer.toLowerCase().trim();
+        } else if (answerMode === 'cn') {
+          // 默写中文模式：比较中文（去除前后空格）
+          const correctCn = word.cn.trim();
+          const userAnswer = answerData.answer.trim();
+          isCorrect = correctCn === userAnswer;
+        } else if (answerMode === 'fill') {
+          // 字母填空模式：比较填写的字母
+          const correctFill = answerData.correctFillAnswer || '';
+          isCorrect = correctFill.toLowerCase() === answerData.answer.toLowerCase().trim();
+        }
+
+        if (isCorrect) {
           correctNum++;
         } else {
-          wrongWords.push(answer.wordId);
+          wrongWords.push(answerData.wordId);
         }
+      } else {
+        // 如果找不到单词，也视为错误
+        wrongWords.push(answerData.wordId);
       }
     });
 
@@ -66,6 +86,7 @@ export class DictationService {
       score: Number(score.toFixed(1)),
       wrongWords,
       dictationTime: new Date(),
+      mode, // 记录默写模式
     });
     await dictation.save();
 

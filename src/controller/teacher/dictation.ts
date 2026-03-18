@@ -53,7 +53,8 @@ export const submit = async (request: FastifyRequest, reply: FastifyReply) => {
       teacherId,
       body.grade,
       body.totalNum,
-      body.answers
+      body.answers,
+      body.mode || 'en' // 默认为默写英文模式
     );
 
     return reply.send(ResponseUtil.success(result));
