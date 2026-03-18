@@ -101,6 +101,49 @@ export class LessonService {
   }
 
   /**
+   * 更新课时掌握状态
+   * 将默写正确的单词从未掌握移到已掌握
+   */
+  static async updateMasterStatus(lessonId: string, correctWordIds: string[]) {
+    const lesson = await Lesson.findById(lessonId);
+    if (!lesson) {
+      throw new Error('课时记录不存在');
+    }
+
+    // 将correctWordIds转换为ObjectId数组
+    const correctIds = correctWordIds.map(id => new mongoose.Types.ObjectId(id));
+
+    // 找出未掌握单词中答对的单词
+    const unknownWordIds = lesson.unknownWords.map(id => id.toString());
+    const wordsToMove = correctWordIds.filter(id => unknownWordIds.includes(id));
+
+    if (wordsToMove.length === 0) {
+      return { movedCount: 0, message: '没有需要更新的单词' };
+    }
+
+    // 将这些单词从未掌握移到已掌握
+    const wordsToMoveIds = wordsToMove.map(id => new mongoose.Types.ObjectId(id));
+    
+    lesson.unknownWords = lesson.unknownWords.filter(
+      id => !wordsToMove.includes(id.toString())
+    );
+    lesson.knowWords = [...lesson.knowWords, ...wordsToMoveIds];
+
+    // 重新计算掌握率
+    const totalWords = lesson.knowWords.length + lesson.unknownWords.length;
+    lesson.masterRate = totalWords > 0 ? (lesson.knowWords.length / totalWords) * 100 : 0;
+
+    await lesson.save();
+
+    return {
+      movedCount: wordsToMove.length,
+      knowWordsCount: lesson.knowWords.length,
+      unknownWordsCount: lesson.unknownWords.length,
+      masterRate: lesson.masterRate
+    };
+  }
+
+  /**
    * 获取学生今日课时数
    */
   static async getTodayLessonCount(studentId: string) {

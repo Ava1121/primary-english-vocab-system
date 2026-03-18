@@ -28,6 +28,7 @@ let dictationCurrentCorrect = false; // 当前题目是否正确
 // 课后默写相关变量
 let lessonDictationWords = []; // 课时单词缓存
 let lessonDictationStudentId = ''; // 课时学生ID
+let lessonDictationId = ''; // 课时ID，用于更新掌握状态
 let isLessonDictation = false; // 是否是课后默写模式
 
 // 切换标签页
@@ -535,9 +536,10 @@ async function startLessonDictation(lessonId, studentId) {
       return;
     }
     
-    // 缓存课时单词、学生ID和年级
+    // 缓存课时单词、学生ID、课时ID和年级
     lessonDictationWords = allWords;
     lessonDictationStudentId = studentId;
+    lessonDictationId = lessonId; // 保存课时ID
     isLessonDictation = true;
     
     // 设置年级（用于保存默写结果）
@@ -596,6 +598,7 @@ function cancelLessonDictation() {
   isLessonDictation = false;
   lessonDictationWords = [];
   lessonDictationStudentId = '';
+  lessonDictationId = '';
   document.getElementById('lessonDictationConfig').style.display = 'none';
   document.getElementById('dictationConfig').style.display = 'block';
 }
@@ -1051,10 +1054,15 @@ async function finishDictation() {
   // 计算本地结果
   let correctNum = 0;
   const wrongWords = [];
+  const correctWordIds = []; // 答对的单词ID列表
   
   dictationAnswers.forEach((answerData, index) => {
     if (answerData.isCorrect) {
       correctNum++;
+      // 收集答对的单词ID
+      if (dictationWords[index]._id) {
+        correctWordIds.push(dictationWords[index]._id);
+      }
     } else {
       wrongWords.push({
         en: dictationWords[index].en,
@@ -1073,6 +1081,14 @@ async function finishDictation() {
     answers: dictationAnswers,
     mode: dictationMode
   });
+  
+  // 如果是课后默写模式，更新课时记录（将答对的未掌握单词移到已掌握）
+  if (isLessonDictation && lessonDictationId && correctWordIds.length > 0) {
+    await http.post('/teacher/lessons/update-master', {
+      lessonId: lessonDictationId,
+      correctWordIds: correctWordIds
+    });
+  }
   
   document.getElementById('dictationContainer').style.display = 'none';
   document.getElementById('dictationResult').style.display = 'block';

@@ -65,3 +65,26 @@ export const reteach = async (request: FastifyRequest, reply: FastifyReply) => {
     return reply.status(400).send(ResponseUtil.error(error.message));
   }
 };
+
+/**
+ * 更新课时掌握状态
+ * 将默写正确的单词从未掌握移到已掌握
+ */
+export const updateMaster = async (request: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const body = request.body as any;
+
+    if (!body.lessonId) {
+      return reply.status(400).send(ResponseUtil.error('课时ID不能为空'));
+    }
+
+    if (!body.correctWordIds || !Array.isArray(body.correctWordIds)) {
+      return reply.status(400).send(ResponseUtil.error('正确单词列表不能为空'));
+    }
+
+    const data = await LessonService.updateMasterStatus(body.lessonId, body.correctWordIds);
+    return reply.send(ResponseUtil.success(data, '掌握状态已更新'));
+  } catch (error: any) {
+    return reply.status(400).send(ResponseUtil.error(error.message));
+  }
+};

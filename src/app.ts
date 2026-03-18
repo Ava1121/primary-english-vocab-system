@@ -249,6 +249,11 @@ fastify.post(
   { preHandler: [authMiddleware, roleMiddleware(['teacher'])] },
   teacherLessons.reteach
 );
+fastify.post(
+  '/api/teacher/lessons/update-master',
+  { preHandler: [authMiddleware, roleMiddleware(['teacher'])] },
+  teacherLessons.updateMaster
+);
 
 // 单词教学
 fastify.get(
