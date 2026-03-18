@@ -841,7 +841,7 @@
       const action = status === 1 ? '启用' : '禁用';
       if (!confirm(`确定要${action}这个老师吗？`)) return;
       
-      const res = await http.request(`/admin/teachers/status?id=${id}&status=${status}`, { method: 'PUT' });
+      const res = await http.put(`/admin/teachers/status?id=${id}&status=${status}`, {});
       if (res.code === 200) {
         showToast(`${action}成功`);
         loadTeachers(teacherPage);
@@ -872,7 +872,7 @@
         return;
       }
       
-      const res = await http.del('/admin/teachers/del', { id, secondaryPassword });
+      const res = await http.post('/admin/teachers/del', { id, secondaryPassword });
       if (res.code === 200) {
         showToast('删除成功');
         closeModal('deleteTeacherModal');

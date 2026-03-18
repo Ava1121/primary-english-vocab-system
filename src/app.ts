@@ -117,7 +117,7 @@ fastify.put(
   { preHandler: [authMiddleware, roleMiddleware(['admin'])] },
   adminTeachers.status
 );
-fastify.delete(
+fastify.post(
   '/api/admin/teachers/del',
   { preHandler: [authMiddleware, roleMiddleware(['admin'])] },
   adminTeachers.del

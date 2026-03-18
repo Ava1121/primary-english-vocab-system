@@ -82,7 +82,7 @@ export const status = async (request: FastifyRequest, reply: FastifyReply) => {
 export const del = async (request: FastifyRequest, reply: FastifyReply) => {
   try {
     const body = request.body as any;
-    const adminId = (request as any).user?.id;
+    const adminId = (request as any).userId;
 
     if (!body.id) {
       return reply.status(400).send(ResponseUtil.error('老师ID不能为空'));
