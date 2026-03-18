@@ -38,6 +38,7 @@ body {
   box-shadow: var(--shadow);
   padding: 20px;
   margin-bottom: 20px;
+  width: 100%;
 }
 
 .card-header {
