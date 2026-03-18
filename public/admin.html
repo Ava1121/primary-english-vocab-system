@@ -619,7 +619,7 @@
         
         // 渲染分页
         const totalPages = Math.ceil(total / 10);
-        renderPagination(document.getElementById('wordPagination'), page, totalPages, loadWords);
+        renderPagination(document.getElementById('wordPagination'), page, totalPages, loadWords, total, 10);
       }
     }
 
@@ -754,7 +754,7 @@
         
         // 渲染分页
         const totalPages = Math.ceil(total / 10);
-        renderPagination(document.getElementById('teacherPagination'), page, totalPages, loadTeachers);
+        renderPagination(document.getElementById('teacherPagination'), page, totalPages, loadTeachers, total, 10);
       }
     }
 
@@ -878,7 +878,7 @@
         document.getElementById('bookList').innerHTML = html || '<tr><td colspan="8" style="text-align: center;">暂无数据</td></tr>';
         
         const totalPages = Math.ceil(total / 10);
-        renderPagination(document.getElementById('bookPagination'), page, totalPages, loadBooks);
+        renderPagination(document.getElementById('bookPagination'), page, totalPages, loadBooks, total, 10);
       }
     }
     
@@ -986,7 +986,7 @@
         document.getElementById('bookWordsList').innerHTML = html || '<tr><td colspan="5" style="text-align: center;">暂无单词</td></tr>';
         
         const totalPages = Math.ceil(total / 20);
-        renderPagination(document.getElementById('bookWordsPagination'), page, totalPages, loadBookWords);
+        renderPagination(document.getElementById('bookWordsPagination'), page, totalPages, loadBookWords, total, 20);
       }
     }
     

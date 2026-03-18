@@ -141,25 +141,54 @@ function checkAuth(requiredRole) {
   return true;
 }
 
-// 渲染分页
-function renderPagination(container, currentPage, totalPages, onPageChange) {
-  let html = '<div class="pagination">';
+// 渲染分页（改进版：显示总数、页数信息）
+function renderPagination(container, currentPage, totalPages, onPageChange, totalItems = 0, pageSize = 10) {
+  const startItem = totalItems > 0 ? (currentPage - 1) * pageSize + 1 : 0;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
+  
+  let html = '<div class="pagination-wrapper">';
+  
+  // 左侧：统计信息
+  html += `<div class="pagination-info">`;
+  html += `共 <span class="highlight">${totalItems}</span> 条，`;
+  html += `每页 <span class="highlight">${pageSize}</span> 条，`;
+  html += `第 <span class="highlight">${startItem}-${endItem}</span> 条`;
+  html += `</div>`;
+  
+  // 右侧：分页按钮
+  html += '<div class="pagination">';
   
   // 上一页
-  html += `<button ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">上一页</button>`;
+  html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">上一页</button>`;
   
   // 页码
   const startPage = Math.max(1, currentPage - 2);
   const endPage = Math.min(totalPages, currentPage + 2);
   
+  if (startPage > 1) {
+    html += `<button class="page-btn" onclick="changePage(1)">1</button>`;
+    if (startPage > 2) {
+      html += `<span class="page-ellipsis">...</span>`;
+    }
+  }
+  
   for (let i = startPage; i <= endPage; i++) {
-    html += `<button class="${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+    html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+  }
+  
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      html += `<span class="page-ellipsis">...</span>`;
+    }
+    html += `<button class="page-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
   }
   
   // 下一页
-  html += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">下一页</button>`;
+  html += `<button class="page-btn" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">下一页</button>`;
   
   html += '</div>';
+  html += '</div>';
+  
   container.innerHTML = html;
   
   // 绑定事件
