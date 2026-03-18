@@ -78,7 +78,16 @@
             if (res.data.userInfo.role === 'admin') {
               window.location.href = '/admin.html';
             } else {
-              window.location.href = '/teacher.html';
+              // 老师登录确认
+              if (confirm(`欢迎 ${res.data.userInfo.realName} 老师，确定进入系统吗？`)) {
+                window.location.href = '/teacher.html';
+              } else {
+                // 取消登录，清除token
+                TokenManager.remove();
+                UserManager.remove();
+                loginBtn.disabled = false;
+                loginBtn.textContent = '登录';
+              }
             }
           }, 500);
         } else {

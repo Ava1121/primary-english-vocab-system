@@ -120,6 +120,7 @@ const gradeMap = {
 
 // 退出登录
 function logout() {
+  if (!confirm('确定要退出登录吗？')) return;
   TokenManager.remove();
   UserManager.remove();
   window.location.href = '/';
