@@ -289,13 +289,48 @@
     
     .word-info {
       flex: 1;
-      cursor: pointer;
+    }
+    
+    .word-en-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     
     .word-info .en {
       font-size: 16px;
       font-weight: 600;
-      margin-bottom: 3px;
+      cursor: pointer;
+    }
+    
+    .word-info .en:hover {
+      color: var(--primary-color);
+    }
+    
+    .speaker-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: none;
+      background: #e8f5e9;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    
+    .speaker-btn:hover {
+      background: var(--primary-color);
+      transform: scale(1.1);
+    }
+    
+    .word-info .phonetic {
+      font-size: 12px;
+      color: #888;
+      margin: 2px 0 3px 0;
+      font-family: 'Times New Roman', serif;
     }
     
     .word-info .cn {
@@ -644,6 +679,13 @@
               <option value="50">50 个</option>
               <option value="100">100 个</option>
               <option value="all">全部</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">单词范围</label>
+            <select class="form-select" id="teachWordScope">
+              <option value="all">全部单词</option>
+              <option value="new">仅生词（不熟悉的）</option>
             </select>
           </div>
         </div>

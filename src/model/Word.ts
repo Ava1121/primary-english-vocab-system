@@ -4,6 +4,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IWord extends Document {
   en: string;
   cn: string;
+  phonetic?: string; // 音标
   grade: number; // 1-6
   createTime: Date;
   updateTime: Date;
@@ -21,6 +22,11 @@ const WordSchema: Schema = new Schema(
     cn: {
       type: String,
       required: true,
+      trim: true,
+    },
+    phonetic: {
+      type: String,
+      required: false,
       trim: true,
     },
     grade: {

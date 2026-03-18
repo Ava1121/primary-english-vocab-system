@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { WordService, LessonService, StudentService } from '../../service';
 import { ResponseUtil } from '../../utils/response';
+import WeakWord from '../../model/WeakWord';
 
 /**
  * 获取年级单词列表
@@ -15,6 +16,52 @@ export const words = async (request: FastifyRequest, reply: FastifyReply) => {
     }
 
     const words = await WordService.getWordsByGrade(grade);
+    return reply.send(ResponseUtil.success(words));
+  } catch (error: any) {
+    return reply.status(500).send(ResponseUtil.serverError(error.message));
+  }
+};
+
+/**
+ * 获取学生生词（薄弱单词）
+ */
+export const weakWords = async (request: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const query = request.query as any;
+    const { studentId, grade } = query;
+
+    if (!studentId) {
+      return reply.status(400).send(ResponseUtil.error('缺少学生ID'));
+    }
+
+    const teacherId = request.userId!;
+    const isOwner = await StudentService.checkStudentBelongsToTeacher(studentId, teacherId);
+    if (!isOwner) {
+      return reply.status(403).send(ResponseUtil.forbidden());
+    }
+
+    // 构建查询条件
+    const queryCondition: any = { studentId };
+    if (grade) {
+      queryCondition.grade = parseInt(grade);
+    }
+
+    // 获取学生的薄弱单词
+    const weakWords = await WeakWord.find(queryCondition)
+      .populate('wordId', 'en cn phonetic grade')
+      .sort({ createTime: -1 });
+
+    // 过滤掉无效数据并提取单词信息
+    const words = weakWords
+      .filter((w: any) => w.wordId)
+      .map((w: any) => ({
+        _id: w.wordId._id,
+        en: w.wordId.en,
+        cn: w.wordId.cn,
+        phonetic: w.wordId.phonetic,
+        grade: w.wordId.grade,
+      }));
+
     return reply.send(ResponseUtil.success(words));
   } catch (error: any) {
     return reply.status(500).send(ResponseUtil.serverError(error.message));

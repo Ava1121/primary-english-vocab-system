@@ -187,6 +187,7 @@ async function startTeaching() {
   const studentId = document.getElementById('teachStudentId').value;
   const grade = parseInt(document.getElementById('teachGrade').value);
   const wordCount = document.getElementById('teachWordCount').value;
+  const wordScope = document.getElementById('teachWordScope').value;
   
   if (!studentId) {
     showToast('请选择学生', 'error');
@@ -200,10 +201,31 @@ async function startTeaching() {
   const studentSelect = document.getElementById('teachStudentId');
   currentStudentName = studentSelect.options[studentSelect.selectedIndex].text.split('(')[0].trim();
   
-  // 加载单词
-  const res = await http.get(`/teacher/teach/words?grade=${grade}`);
-  if (res.code === 200) {
-    let words = res.data;
+  let words = [];
+  
+  // 根据单词范围获取单词
+  if (wordScope === 'new') {
+    // 仅获取生词（薄弱单词）
+    const res = await http.get(`/teacher/teach/weakWords?studentId=${studentId}&grade=${grade}`);
+    if (res.code === 200) {
+      words = res.data;
+      if (words.length === 0) {
+        showToast('该学生没有生词记录', 'error');
+        return;
+      }
+    } else {
+      showToast(res.msg, 'error');
+      return;
+    }
+  } else {
+    // 获取全部单词
+    const res = await http.get(`/teacher/teach/words?grade=${grade}`);
+    if (res.code === 200) {
+      words = res.data;
+    } else {
+      showToast(res.msg, 'error');
+      return;
+    }
     
     // 根据数量筛选（随机）
     if (wordCount !== 'all') {
@@ -214,26 +236,25 @@ async function startTeaching() {
         words = words.slice(0, count);
       }
     }
-    
-    teachingWords = words;
-    knowWords = [];
-    unknownWords = [];
-    currentFilter = 'all';
-    
-    // 显示教学界面
-    document.getElementById('teachConfig').style.display = 'none';
-    document.getElementById('teachInterface').style.display = 'block';
-    
-    // 更新标题
-    document.getElementById('teachBookTitle').textContent = `📖 ${gradeMap[grade]}单词学习`;
-    document.getElementById('teachStudentInfo').textContent = `学生：${currentStudentName} | 年级：${gradeMap[grade]}`;
-    
-    // 渲染单词列表
-    renderWordList();
-    updateStats();
-  } else {
-    showToast(res.msg, 'error');
   }
+  
+  teachingWords = words;
+  knowWords = [];
+  unknownWords = [];
+  currentFilter = 'all';
+  
+  // 显示教学界面
+  document.getElementById('teachConfig').style.display = 'none';
+  document.getElementById('teachInterface').style.display = 'block';
+  
+  // 更新标题
+  const scopeText = wordScope === 'new' ? '（仅生词）' : '';
+  document.getElementById('teachBookTitle').textContent = `📖 ${gradeMap[grade]}单词学习${scopeText}`;
+  document.getElementById('teachStudentInfo').textContent = `学生：${currentStudentName} | 年级：${gradeMap[grade]}`;
+  
+  // 渲染单词列表
+  renderWordList();
+  updateStats();
 }
 
 // 渲染单词列表
@@ -255,10 +276,17 @@ function renderWordList() {
     if (isKnown) statusClass = 'known';
     if (isUnknown) statusClass = 'unknown';
     
+    // 音标显示
+    const phoneticHtml = word.phonetic ? `<div class="phonetic">${word.phonetic}</div>` : '';
+    
     html += `
       <div class="word-card-item ${statusClass}" data-id="${word._id}">
-        <div class="word-info" onclick="playPronunciation('${word.en}')">
-          <div class="en">${word.en}</div>
+        <div class="word-info">
+          <div class="word-en-row">
+            <span class="en" onclick="playPronunciation('${word.en}')">${word.en}</span>
+            <button class="speaker-btn" onclick="playPronunciation('${word.en}')" title="点击发音">🔊</button>
+          </div>
+          ${phoneticHtml}
           <div class="cn">${word.cn}</div>
         </div>
         <div class="word-status-btns">
