@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小学英语单词教学管理系统 - 登录</title>
+  <link rel="stylesheet" href="/css/common.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-box">
+      <div class="login-title">
+        <h1>小学英语单词教学管理系统</h1>
+        <p>请输入账号密码登录</p>
+      </div>
+      
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label">账号</label>
+          <input type="text" class="form-input" id="username" placeholder="请输入账号" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">密码</label>
+          <input type="password" class="form-input" id="password" placeholder="请输入密码" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary" style="width: 100%;" id="loginBtn">登录</button>
+      </form>
+      
+      <div style="margin-top: 20px; text-align: center; color: #999; font-size: 12px;">
+        <p>管理员账号: admin / Admin123!</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/utils.js"></script>
+  <script>
+    // 检查是否已登录
+    const userInfo = UserManager.get();
+    if (userInfo) {
+      // 根据角色跳转
+      if (userInfo.role === 'admin') {
+        window.location.href = '/admin.html';
+      } else {
+        window.location.href = '/teacher.html';
+      }
+    }
+
+    // 登录表单提交
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const loginBtn = document.getElementById('loginBtn');
+      
+      if (!username || !password) {
+        showToast('请输入账号和密码', 'error');
+        return;
+      }
+      
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<span class="loading"></span> 登录中...';
+      
+      try {
+        const res = await http.post('/login', { username, password });
+        
+        if (res.code === 200) {
+          // 保存 token 和用户信息
+          TokenManager.set(res.data.token);
+          UserManager.set(res.data.userInfo);
+          
+          showToast('登录成功');
+          
+          // 根据角色跳转
+          setTimeout(() => {
+            if (res.data.userInfo.role === 'admin') {
+              window.location.href = '/admin.html';
+            } else {
+              window.location.href = '/teacher.html';
+            }
+          }, 500);
+        } else {
+          showToast(res.msg, 'error');
+          loginBtn.disabled = false;
+          loginBtn.textContent = '登录';
+        }
+      } catch (error) {
+        showToast('登录失败，请稍后重试', 'error');
+        loginBtn.disabled = false;
+        loginBtn.textContent = '登录';
+      }
+    });
+  </script>
+</body>
+</html>

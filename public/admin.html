@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理员控制台 - 小学英语单词教学管理系统</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <style>
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 200px;
+      height: 100vh;
+      background: white;
+      box-shadow: var(--shadow);
+      padding-top: 20px;
+    }
+    
+    .sidebar-brand {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 20px;
+    }
+    
+    .sidebar-brand h2 {
+      font-size: 16px;
+      color: var(--primary-color);
+    }
+    
+    .sidebar-menu {
+      list-style: none;
+    }
+    
+    .sidebar-menu li {
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border-left: 3px solid transparent;
+    }
+    
+    .sidebar-menu li:hover {
+      background-color: var(--bg-color);
+    }
+    
+    .sidebar-menu li.active {
+      background-color: var(--bg-color);
+      border-left-color: var(--primary-color);
+      color: var(--primary-color);
+      font-weight: 500;
+    }
+    
+    .main-content {
+      margin-left: 200px;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .import-info {
+      margin-top: 10px;
+      padding: 10px;
+      background: var(--bg-color);
+      border-radius: 4px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <!-- 侧边栏 -->
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <h2>管理员控制台</h2>
+    </div>
+    <ul class="sidebar-menu">
+      <li class="active" data-tab="dashboard">📊 数据统计</li>
+      <li data-tab="words">📚 单词管理</li>
+      <li data-tab="teachers">👨‍🏫 老师管理</li>
+      <li data-tab="profile">⚙️ 个人中心</li>
+      <li onclick="logout()">🚪 退出登录</li>
+    </ul>
+  </div>
+
+  <!-- 主内容区 -->
+  <div class="main-content">
+    <!-- 数据统计 -->
+    <div id="tab-dashboard" class="tab-content active">
+      <div class="page-header">
+        <h1 class="page-title">数据统计</h1>
+      </div>
+      
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="value" id="totalWords">-</div>
+          <div class="label">总单词数</div>
+        </div>
+        <div class="stat-card">
+          <div class="value" id="totalTeachers">-</div>
+          <div class="label">老师总数</div>
+        </div>
+        <div class="stat-card">
+          <div class="value" id="totalStudents">-</div>
+          <div class="label">学生总数</div>
+        </div>
+        <div class="stat-card">
+          <div class="value" id="avgMasterRate">-</div>
+          <div class="label">平均掌握率(%)</div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">各年级单词数量</h3>
+        </div>
+        <div id="gradeStats" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; text-align: center;"></div>
+      </div>
+    </div>
+
+    <!-- 单词管理 -->
+    <div id="tab-words" class="tab-content">
+      <div class="page-header">
+        <h1 class="page-title">单词管理</h1>
+        <div>
+          <button class="btn btn-secondary" onclick="showImportModal()">📥 批量导入</button>
+          <button class="btn btn-primary" onclick="showAddWordModal()">➕ 新增单词</button>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="search-bar">
+          <select class="form-select" id="wordGradeFilter" style="width: 150px;" onchange="loadWords()">
+            <option value="">全部年级</option>
+            <option value="1">一年级</option>
+            <option value="2">二年级</option>
+            <option value="3">三年级</option>
+            <option value="4">四年级</option>
+            <option value="5">五年级</option>
+            <option value="6">六年级</option>
+          </select>
+          <input type="text" class="form-input" id="wordKeyword" placeholder="搜索单词（中英文）" onkeyup="if(event.keyCode===13)loadWords()">
+          <button class="btn btn-primary" onclick="loadWords()">搜索</button>
+        </div>
+        
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>英文单词</th>
+                <th>中文释义</th>
+                <th>年级</th>
+                <th>创建时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="wordList"></tbody>
+          </table>
+        </div>
+        
+        <div id="wordPagination"></div>
+      </div>
+    </div>
+
+    <!-- 老师管理 -->
+    <div id="tab-teachers" class="tab-content">
+      <div class="page-header">
+        <h1 class="page-title">老师管理</h1>
+        <button class="btn btn-primary" onclick="showAddTeacherModal()">➕ 新增老师</button>
+      </div>
+      
+      <div class="card">
+        <div class="search-bar">
+          <input type="text" class="form-input" id="teacherKeyword" placeholder="搜索老师（账号/姓名）" onkeyup="if(event.keyCode===13)loadTeachers()">
+          <button class="btn btn-primary" onclick="loadTeachers()">搜索</button>
+        </div>
+        
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>账号</th>
+                <th>姓名</th>
+                <th>学生数</th>
+                <th>状态</th>
+                <th>创建时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="teacherList"></tbody>
+          </table>
+        </div>
+        
+        <div id="teacherPagination"></div>
+      </div>
+    </div>
+
+    <!-- 个人中心 -->
+    <div id="tab-profile" class="tab-content">
+      <div class="page-header">
+        <h1 class="page-title">个人中心</h1>
+      </div>
+      
+      <div class="card" style="max-width: 500px;">
+        <h3 style="margin-bottom: 20px;">修改密码</h3>
+        <form id="changePwdForm">
+          <div class="form-group">
+            <label class="form-label">旧密码</label>
+            <input type="password" class="form-input" id="oldPwd" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">新密码</label>
+            <input type="password" class="form-input" id="newPwd" required minlength="6">
+            <small style="color: #999;">密码至少6位，需包含字母和数字</small>
+          </div>
+          <div class="form-group">
+            <label class="form-label">确认新密码</label>
+            <input type="password" class="form-input" id="confirmPwd" required>
+          </div>
+          <button type="submit" class="btn btn-primary">确认修改</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新增/编辑单词弹窗 -->
+  <div class="modal" id="wordModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="wordModalTitle">新增单词</h3>
+        <button class="modal-close" onclick="closeModal('wordModal')">&times;</button>
+      </div>
+      <form id="wordForm">
+        <input type="hidden" id="wordId">
+        <div class="form-group">
+          <label class="form-label">英文单词</label>
+          <input type="text" class="form-input" id="wordEn" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">中文释义</label>
+          <input type="text" class="form-input" id="wordCn" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">年级</label>
+          <select class="form-select" id="wordGrade" required>
+            <option value="1">一年级</option>
+            <option value="2">二年级</option>
+            <option value="3">三年级</option>
+            <option value="4">四年级</option>
+            <option value="5">五年级</option>
+            <option value="6">六年级</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">保存</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 批量导入弹窗 -->
+  <div class="modal" id="importModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>批量导入单词</h3>
+        <button class="modal-close" onclick="closeModal('importModal')">&times;</button>
+      </div>
+      <div>
+        <div class="form-group">
+          <label class="form-label">选择JSON文件</label>
+          <input type="file" class="form-input" id="importFile" accept=".json">
+        </div>
+        <div class="import-info">
+          <p><strong>JSON格式示例：</strong></p>
+          <pre style="background: white; padding: 10px; border-radius: 4px; overflow-x: auto;">[
+  {"en": "apple", "cn": "苹果", "grade": 1},
+  {"en": "banana", "cn": "香蕉", "grade": 1}
+]</pre>
+        </div>
+        <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="importWords()">开始导入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新增/编辑老师弹窗 -->
+  <div class="modal" id="teacherModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="teacherModalTitle">新增老师</h3>
+        <button class="modal-close" onclick="closeModal('teacherModal')">&times;</button>
+      </div>
+      <form id="teacherForm">
+        <input type="hidden" id="teacherId">
+        <div class="form-group">
+          <label class="form-label">账号</label>
+          <input type="text" class="form-input" id="teacherUsername" required>
+        </div>
+        <div class="form-group" id="teacherPwdGroup">
+          <label class="form-label">初始密码</label>
+          <input type="password" class="form-input" id="teacherPassword">
+          <small style="color: #999;">密码至少6位，需包含字母和数字</small>
+        </div>
+        <div class="form-group">
+          <label class="form-label">姓名</label>
+          <input type="text" class="form-input" id="teacherRealName" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">保存</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 查看老师学生弹窗 -->
+  <div class="modal" id="studentModal">
+    <div class="modal-content" style="max-width: 700px;">
+      <div class="modal-header">
+        <h3>老师名下学生</h3>
+        <button class="modal-close" onclick="closeModal('studentModal')">&times;</button>
+      </div>
+      <div id="teacherStudentsList"></div>
+    </div>
+  </div>
+
+  <script src="/js/utils.js"></script>
+  <script>
+    // 检查登录权限
+    if (!checkAuth('admin')) {
+      // checkAuth 内部会自动跳转
+    }
+
+    // 当前页码
+    let wordPage = 1;
+    let teacherPage = 1;
+
+    // 切换标签页
+    document.querySelectorAll('.sidebar-menu li[data-tab]').forEach(li => {
+      li.addEventListener('click', function() {
+        // 更新菜单状态
+        document.querySelectorAll('.sidebar-menu li').forEach(item => item.classList.remove('active'));
+        this.classList.add('active');
+        
+        // 切换内容
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        document.getElementById(`tab-${this.dataset.tab}`).classList.add('active');
+        
+        // 加载数据
+        if (this.dataset.tab === 'dashboard') {
+          loadDashboard();
+        } else if (this.dataset.tab === 'words') {
+          loadWords();
+        } else if (this.dataset.tab === 'teachers') {
+          loadTeachers();
+        }
+      });
+    });
+
+    // 加载控制台数据
+    async function loadDashboard() {
+      const res = await http.get('/admin/dashboard');
+      if (res.code === 200) {
+        document.getElementById('totalWords').textContent = res.data.totalWords;
+        document.getElementById('totalTeachers').textContent = res.data.totalTeachers;
+        document.getElementById('totalStudents').textContent = res.data.totalStudents;
+        document.getElementById('avgMasterRate').textContent = res.data.avgMasterRate;
+        
+        // 渲染年级统计
+        const gradeStats = res.data.gradeWordCounts;
+        let html = '';
+        for (let i = 1; i <= 6; i++) {
+          html += `
+            <div class="stat-card">
+              <div class="value">${gradeStats[i]}</div>
+              <div class="label">${gradeMap[i]}</div>
+            </div>
+          `;
+        }
+        document.getElementById('gradeStats').innerHTML = html;
+      }
+    }
+
+    // 加载单词列表
+    async function loadWords(page = 1) {
+      wordPage = page;
+      const grade = document.getElementById('wordGradeFilter').value;
+      const keyword = document.getElementById('wordKeyword').value;
+      
+      const res = await http.get(`/admin/words/list?page=${page}&size=10&grade=${grade}&keyword=${encodeURIComponent(keyword)}`);
+      if (res.code === 200) {
+        const { list, total } = res.data;
+        let html = '';
+        list.forEach((word, index) => {
+          html += `
+            <tr>
+              <td>${(page - 1) * 10 + index + 1}</td>
+              <td>${word.en}</td>
+              <td>${word.cn}</td>
+              <td>${gradeMap[word.grade]}</td>
+              <td>${formatDate(word.createTime)}</td>
+              <td>
+                <button class="btn btn-sm btn-secondary" onclick="editWord('${word._id}', '${word.en}', '${word.cn}', ${word.grade})">编辑</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteWord('${word._id}')">删除</button>
+              </td>
+            </tr>
+          `;
+        });
+        document.getElementById('wordList').innerHTML = html || '<tr><td colspan="6" style="text-align: center;">暂无数据</td></tr>';
+        
+        // 渲染分页
+        const totalPages = Math.ceil(total / 10);
+        renderPagination(document.getElementById('wordPagination'), page, totalPages, loadWords);
+      }
+    }
+
+    // 显示新增单词弹窗
+    function showAddWordModal() {
+      document.getElementById('wordModalTitle').textContent = '新增单词';
+      document.getElementById('wordId').value = '';
+      document.getElementById('wordEn').value = '';
+      document.getElementById('wordCn').value = '';
+      document.getElementById('wordGrade').value = '1';
+      document.getElementById('wordModal').classList.add('active');
+    }
+
+    // 编辑单词
+    function editWord(id, en, cn, grade) {
+      document.getElementById('wordModalTitle').textContent = '编辑单词';
+      document.getElementById('wordId').value = id;
+      document.getElementById('wordEn').value = en;
+      document.getElementById('wordCn').value = cn;
+      document.getElementById('wordGrade').value = grade;
+      document.getElementById('wordModal').classList.add('active');
+    }
+
+    // 保存单词
+    document.getElementById('wordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const id = document.getElementById('wordId').value;
+      const data = {
+        en: document.getElementById('wordEn').value.trim(),
+        cn: document.getElementById('wordCn').value.trim(),
+        grade: parseInt(document.getElementById('wordGrade').value)
+      };
+      
+      let res;
+      if (id) {
+        data.id = id;
+        res = await http.put('/admin/words/edit', data);
+      } else {
+        res = await http.post('/admin/words/add', data);
+      }
+      
+      if (res.code === 200) {
+        showToast(res.msg);
+        closeModal('wordModal');
+        loadWords(wordPage);
+      } else {
+        showToast(res.msg, 'error');
+      }
+    });
+
+    // 删除单词
+    async function deleteWord(id) {
+      if (!confirm('确定要删除这个单词吗？')) return;
+      
+      const res = await http.delete(`/admin/words/del?id=${id}`);
+      if (res.code === 200) {
+        showToast('删除成功');
+        loadWords(wordPage);
+      } else {
+        showToast(res.msg, 'error');
+      }
+    }
+
+    // 显示导入弹窗
+    function showImportModal() {
+      document.getElementById('importFile').value = '';
+      document.getElementById('importModal').classList.add('active');
+    }
+
+    // 批量导入
+    async function importWords() {
+      const file = document.getElementById('importFile').files[0];
+      if (!file) {
+        showToast('请选择文件', 'error');
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const token = TokenManager.get();
+      const response = await fetch('/api/admin/words/import', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+      
+      const res = await response.json();
+      if (res.code === 200) {
+        showToast(res.data.msg);
+        closeModal('importModal');
+        loadWords();
+      } else {
+        showToast(res.msg, 'error');
+      }
+    }
+
+    // 加载老师列表
+    async function loadTeachers(page = 1) {
+      teacherPage = page;
+      const keyword = document.getElementById('teacherKeyword').value;
+      
+      const res = await http.get(`/admin/teachers/list?page=${page}&size=10&keyword=${encodeURIComponent(keyword)}`);
+      if (res.code === 200) {
+        const { list, total } = res.data;
+        let html = '';
+        for (const teacher of list) {
+          // 获取学生数
+          const studentsRes = await http.get(`/admin/teachers/students?teacherId=${teacher._id}`);
+          const studentCount = studentsRes.code === 200 ? studentsRes.data.length : 0;
+          
+          html += `
+            <tr>
+              <td>${(page - 1) * 10 + list.indexOf(teacher) + 1}</td>
+              <td>${teacher.username}</td>
+              <td>${teacher.realName}</td>
+              <td>${studentCount}</td>
+              <td><span class="badge ${teacher.status === 1 ? 'badge-success' : 'badge-danger'}">${teacher.status === 1 ? '启用' : '禁用'}</span></td>
+              <td>${formatDate(teacher.createTime)}</td>
+              <td>
+                <button class="btn btn-sm btn-secondary" onclick="showTeacherStudents('${teacher._id}', '${teacher.realName}')">查看学生</button>
+                <button class="btn btn-sm btn-secondary" onclick="editTeacher('${teacher._id}', '${teacher.realName}')">编辑</button>
+                <button class="btn btn-sm ${teacher.status === 1 ? 'btn-danger' : 'btn-primary'}" onclick="toggleTeacherStatus('${teacher._id}', ${teacher.status === 1 ? 0 : 1})">${teacher.status === 1 ? '禁用' : '启用'}</button>
+              </td>
+            </tr>
+          `;
+        }
+        document.getElementById('teacherList').innerHTML = html || '<tr><td colspan="7" style="text-align: center;">暂无数据</td></tr>';
+        
+        // 渲染分页
+        const totalPages = Math.ceil(total / 10);
+        renderPagination(document.getElementById('teacherPagination'), page, totalPages, loadTeachers);
+      }
+    }
+
+    // 显示新增老师弹窗
+    function showAddTeacherModal() {
+      document.getElementById('teacherModalTitle').textContent = '新增老师';
+      document.getElementById('teacherId').value = '';
+      document.getElementById('teacherUsername').value = '';
+      document.getElementById('teacherPassword').value = '';
+      document.getElementById('teacherRealName').value = '';
+      document.getElementById('teacherUsername').disabled = false;
+      document.getElementById('teacherPwdGroup').style.display = 'block';
+      document.getElementById('teacherPassword').required = true;
+      document.getElementById('teacherModal').classList.add('active');
+    }
+
+    // 编辑老师
+    function editTeacher(id, realName) {
+      document.getElementById('teacherModalTitle').textContent = '编辑老师';
+      document.getElementById('teacherId').value = id;
+      document.getElementById('teacherUsername').value = '';
+      document.getElementById('teacherPassword').value = '';
+      document.getElementById('teacherRealName').value = realName;
+      document.getElementById('teacherUsername').disabled = true;
+      document.getElementById('teacherPwdGroup').style.display = 'none';
+      document.getElementById('teacherPassword').required = false;
+      document.getElementById('teacherModal').classList.add('active');
+    }
+
+    // 保存老师
+    document.getElementById('teacherForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const id = document.getElementById('teacherId').value;
+      const data = {
+        realName: document.getElementById('teacherRealName').value.trim()
+      };
+      
+      let res;
+      if (id) {
+        data.id = id;
+        res = await http.put('/admin/teachers/edit', data);
+      } else {
+        data.username = document.getElementById('teacherUsername').value.trim();
+        data.password = document.getElementById('teacherPassword').value;
+        res = await http.post('/admin/teachers/add', data);
+      }
+      
+      if (res.code === 200) {
+        showToast(res.msg);
+        closeModal('teacherModal');
+        loadTeachers(teacherPage);
+      } else {
+        showToast(res.msg, 'error');
+      }
+    });
+
+    // 切换老师状态
+    async function toggleTeacherStatus(id, status) {
+      const action = status === 1 ? '启用' : '禁用';
+      if (!confirm(`确定要${action}这个老师吗？`)) return;
+      
+      const res = await http.put(`/admin/teachers/status?id=${id}&status=${status}`);
+      if (res.code === 200) {
+        showToast(`${action}成功`);
+        loadTeachers(teacherPage);
+      } else {
+        showToast(res.msg, 'error');
+      }
+    }
+
+    // 查看老师学生
+    async function showTeacherStudents(teacherId, teacherName) {
+      const res = await http.get(`/admin/teachers/students?teacherId=${teacherId}`);
+      if (res.code === 200) {
+        let html = `<h4 style="margin-bottom: 15px;">${teacherName} 的学生 (${res.data.length}人)</h4>`;
+        if (res.data.length > 0) {
+          html += '<table class="table"><thead><tr><th>序号</th><th>账号</th><th>姓名</th><th>年级</th></tr></thead><tbody>';
+          res.data.forEach((s, i) => {
+            html += `<tr><td>${i + 1}</td><td>${s.username}</td><td>${s.name}</td><td>${gradeMap[s.grade]}</td></tr>`;
+          });
+          html += '</tbody></table>';
+        } else {
+          html += '<p style="text-align: center; color: #999; padding: 20px;">暂无学生</p>';
+        }
+        document.getElementById('teacherStudentsList').innerHTML = html;
+        document.getElementById('studentModal').classList.add('active');
+      }
+    }
+
+    // 修改密码
+    document.getElementById('changePwdForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const oldPwd = document.getElementById('oldPwd').value;
+      const newPwd = document.getElementById('newPwd').value;
+      const confirmPwd = document.getElementById('confirmPwd').value;
+      
+      if (newPwd !== confirmPwd) {
+        showToast('两次输入的密码不一致', 'error');
+        return;
+      }
+      
+      const res = await http.put('/admin/profile/pwd', { oldPwd, newPwd });
+      if (res.code === 200) {
+        showToast('密码修改成功');
+        document.getElementById('changePwdForm').reset();
+      } else {
+        showToast(res.msg, 'error');
+      }
+    });
+
+    // 关闭弹窗
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    // 点击弹窗外部关闭
+    document.querySelectorAll('.modal').forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('active');
+        }
+      });
+    });
+
+    // 初始化加载
+    loadDashboard();
+  </script>
+</body>
+</html>

@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>老师控制台 - 小学英语单词教学管理系统</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <style>
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 220px;
+      height: 100vh;
+      background: white;
+      box-shadow: var(--shadow);
+      padding-top: 20px;
+      overflow-y: auto;
+    }
+    
+    .sidebar-brand {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 20px;
+    }
+    
+    .sidebar-brand h2 {
+      font-size: 16px;
+      color: var(--primary-color);
+    }
+    
+    .sidebar-menu {
+      list-style: none;
+    }
+    
+    .sidebar-menu li {
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border-left: 3px solid transparent;
+    }
+    
+    .sidebar-menu li:hover {
+      background-color: var(--bg-color);
+    }
+    
+    .sidebar-menu li.active {
+      background-color: var(--bg-color);
+      border-left-color: var(--primary-color);
+      color: var(--primary-color);
+      font-weight: 500;
+    }
+    
+    .main-content {
+      margin-left: 220px;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* 教学页面样式 */
+    .teach-container {
+      display: flex;
+      gap: 20px;
+      height: calc(100vh - 120px);
+    }
+    
+    .teach-sidebar {
+      width: 300px;
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow);
+      padding: 15px;
+      overflow-y: auto;
+    }
+    
+    .teach-main {
+      flex: 1;
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow);
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .word-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    
+    .word-en {
+      font-size: 48px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+    
+    .word-en:hover {
+      color: var(--primary-color);
+    }
+    
+    .word-cn {
+      font-size: 32px;
+      color: var(--text-secondary);
+      margin-bottom: 30px;
+    }
+    
+    .word-actions {
+      display: flex;
+      gap: 20px;
+    }
+    
+    .word-item {
+      padding: 10px;
+      margin-bottom: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .word-item:hover {
+      background-color: var(--bg-color);
+    }
+    
+    .word-item.current {
+      background-color: #d4edda;
+      border-left: 3px solid var(--primary-color);
+    }
+    
+    /* 专项教学 */
+    .special-teach {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+    }
+    
+    .special-teach.active {
+      display: flex;
+    }
+    
+    .progress-bar {
+      height: 8px;
+      background: var(--bg-color);
+      border-radius: 4px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: var(--primary-color);
+      transition: width 0.3s;
+    }
+    
+    /* 默写页面 */
+    .dictation-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .dictation-question {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow);
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .dictation-question h2 {
+      font-size: 24px;
+      margin-bottom: 30px;
+    }
+    
+    .dictation-question .cn {
+      font-size: 36px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    
+    .dictation-answer {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .dictation-answer input {
+      width: 300px;
+      padding: 15px;
+      font-size: 18px;
+    }
+    
+    /* 统计图表 */
+    .chart-container {
+      height: 300px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      padding: 20px;
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow);
+    }
+    
+    .chart-bar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .chart-bar .bar {
+      width: 60px;
+      background: var(--primary-color);
+      border-radius: 4px 4px 0 0;
+      transition: height 0.3s;
+    }
+    
+    .chart-bar .label {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    
+    .chart-bar .value {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <!-- 侧边栏 -->
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <h2>老师控制台</h2>
+    </div>
+    <ul class="sidebar-menu">
+      <li class="active" data-tab="dashboard">📊 数据概览</li>
+      <li data-tab="students">👥 学生管理</li>
+      <li data-tab="teach">📚 单词教学</li>
+      <li data-tab="lessons">📝 课时记录</li>
+      <li data-tab="weak">❌ 薄弱单词库</li>
+      <li data-tab="dictation">✍️ 默写练习</li>
+      <li data-tab="statistics">📈 学习统计</li>
+      <li data-tab="profile">⚙️ 个人中心</li>
+      <li onclick="logout()">🚪 退出登录</li>
+    </ul>
+  </div>
+
+  <!-- 主内容区 -->
+  <div class="main-content">
+    <!-- 数据概览 -->
+    <div id="tab-dashboard" class="tab-content active">
+      <div class="page-header">
+        <h1 class="page-title">数据概览</h1>
+      </div>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="value" id="studentCount">-</div>
+          <div class="label">我的学生</div>
+        </div>
+        <div class="stat-card">
+          <div class="value" id="todayLessonCount">-</div>
+          <div class="label">今日课时</div>
+        </div>
+        <div class="stat-card">
+          <div class="value" id="avgMasterRate">-</div>
+          <div class="label">平均掌握率(%)</div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">快捷入口</h3>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+          <button class="btn btn-primary" style="padding: 20px; font-size: 16px;" onclick="switchTab('teach')">📚 开始教学</button>
+          <button class="btn btn-primary" style="padding: 20px; font-size: 16px;" onclick="switchTab('dictation')">✍️ 开始默写</button>
+          <button class="btn btn-primary" style="padding: 20px; font-size: 16px;" onclick="switchTab('students')">👥 添加学生</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 学生管理 -->
+    <div id="tab-students" class="tab-content">
+      <div class="page-header">
+        <h1 class="page-title">学生管理</h1>
+        <button class="btn btn-primary" onclick="showAddStudentModal()">➕ 新增学生</button>
+      </div>
+      
+      <div class="card">
+        <div class="search-bar">
+          <input type="text" class="form-input" id="studentKeyword" placeholder="搜索学生（账号/姓名）" onkeyup="if(event.keyCode===13)loadStudents()">
+          <button class="btn btn-primary" onclick="loadStudents()">搜索</button>
+        </div>
+        
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>账号</th>
+                <th>姓名</th>
+                <th>年级</th>
+                <th>创建时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="studentList"></tbody>
+          </table>
+        </div>
+        
+        <div id="studentPagination"></div>
+      </div>
+    </div>
+
+    <!-- 单词教学 -->
+    <div id="tab-teach" class="tab-content">
+      <div class="page-header">
+        <h1 class="page-title">单词教学</h1>
+      </div>
+      
+      <!-- 选择学生和年级 -->
+      <div class="card" id="teachSelect" style="max-width: 600px; margin: 50px auto;">
+        <h3 style="margin-bottom: 20px;">选择学生和年级开始教学</h3>
+        <div class="form-group">
+          <label class="form-label">选择学生</label>
+          <select class="form-select" id="teachStudentId" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">选择年级</label>
+          <select class="form-select" id="teachGrade">
+            <option value="1">一年级</option>
+            <option value="2">二年级</option>
+            <option value="3">三年级</option>
+            <option value="4">四年级</option>
+            <option value="5">五年级</option>
+            <option value="6">六年级</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" style="width: 100%;" onclick="startTeach()">开始教学</button>
+      </div>
+      
+      <!-- 教学界面 -->
+      <div class="teach-container" id="teachContainer" style="display: none;">
+        <div class="teach-sidebar">
+          <h3 style="margin-bottom: 15px;">单词列表 <span id="teachProgress"></span></h3>
+          <div id="teachWordList"></div>
+        </div>
+        
+        <div class="teach-main">
+          <div id="normalTeach" class="word-card">
+            <div class="word-en" id="teachWordEn" onclick="playPronunciation(this.textContent)">-</div>
+            <div class="word-cn" id="teachWordCn">-</div>
+            <div class="word-actions">
+              <button class="btn btn-danger" style="padding: 15px 40px; font-size: 16px;" onclick="markWord('unknown')">不认识</button>
+              <button class="btn btn-primary" style="padding: 15px 40px; font-size: 16px;" onclick="markWord('know')">认识</button>
+            </div>
+          </div>
+          
+          <div id="specialTeach" class="special-teach">
+            <h3 style="margin-bottom: 15px;">专项教学</h3>
+            <div class="progress-bar">
+              <div class="progress-fill" id="specialProgress" style="width: 0%"></div>
+            </div>
+            <div class="word-card">
+              <div class="word-en" id="specialWordEn" onclick="playPronunciation(this.textContent)">-</div>
+              <div class="word-cn" id="specialWordCn">（点击下方按钮显示中文）</div>
+              <div class="word-actions" style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="toggleSpecialCn()">显示/隐藏中文</button>
+                <button class="btn btn-secondary" onclick="playPronunciation(document.getElementById('specialWordEn').textContent)">🔊 发音</button>
+                <button class="btn btn-primary" onclick="nextSpecialWord()">下一个 →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 课时记录 -->
+    <div id="tab-lessons" class="tab-content">
+      <div class="page-header">
+        <h1 class="page-title">课时记录</h1>
+      </div>
+      
+      <div class="card">
+        <div class="search-bar">
+          <select class="form-select" id="lessonStudentId" style="width: 200px;" onchange="loadLessons()">
+            <option value="">选择学生</option>
+          </select>
+        </div>
+        
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>年级</th>
+                <th>已掌握</th>
+                <th>未掌握</th>
+                <th>掌握率</th>
+                <th>上课时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="lessonList"></tbody>
+          </table>
+        </div>
+        
+        <div id="lessonPagination"></div>
+      </div>
+    </div>
+
+    <!-- 薄弱单词库 -->
+    <div id="tab-weak" class="tab-content">
+      <div class="page-header">
+        <h1 class="page-title">薄弱单词库</h1>
+      </div>
+      
+      <div class="card">
+        <div class="search-bar">
+          <select class="form-select" id="weakStudentId" style="width: 200px;" onchange="loadWeakWords()">
+            <option value="">选择学生</option>
+          </select>
+          <select class="form-select" id="weakGrade" style="width: 150px;" onchange="loadWeakWords()">
+            <option value="">全部年级</option>
+            <option value="1">一年级</option>
+            <option value="2">二年级</option>
+            <option value="3">三年级</option>
+            <option value="4">四年级</option>
+            <option value="5">五年级</option>
+            <option value="6">六年级</option>
+          </select>
+          <button class="btn btn-primary" onclick="reteachWeakWords()">一键重教</button>
+          <button class="btn btn-danger" onclick="clearWeakWords()">清空薄弱库</button>
+        </div>
+        
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>英文单词</th>
+                <th>中文释义</th>
+                <th>年级</th>
+                <th>加入时间</th>
+              </tr>
+            </thead>
+            <tbody id="weakWordList"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 默写练习 -->
+    <div id="tab-dictation" class="tab-content">
+      <div class="page-header">
+        <h1 class="page-title">默写练习</h1>
+      </div>
+      
+      <!-- 选择学生和题量 -->
+      <div class="card" id="dictationSelect" style="max-width: 600px; margin: 50px auto;">
+        <h3 style="margin-bottom: 20px;">选择学生、年级和题量开始默写</h3>
+        <div class="form-group">
+          <label class="form-label">选择学生</label>
+          <select class="form-select" id="dictationStudentId" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">选择年级</label>
+          <select class="form-select" id="dictationGrade">
+            <option value="1">一年级</option>
+            <option value="2">二年级</option>
+            <option value="3">三年级</option>
+            <option value="4">四年级</option>
+            <option value="5">五年级</option>
+            <option value="6">六年级</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">题量</label>
+          <select class="form-select" id="dictationNum">
+            <option value="5">5题</option>
+            <option value="10" selected>10题</option>
+            <option value="15">15题</option>
+            <option value="20">20题</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" style="width: 100%;" onclick="startDictation()">开始默写</button>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+          <h4 style="margin-bottom: 15px;">历史记录</h4>
+          <div id="dictationHistory"></div>
+        </div>
+      </div>
+      
+      <!-- 默写界面 -->
+      <div class="dictation-container" id="dictationContainer" style="display: none;">
+        <div class="dictation-question">
+          <h2>第 <span id="dictationCurrentNum">1</span> / <span id="dictationTotalNum">10</span> 题</h2>
+          <div class="cn" id="dictationCn">苹果</div>
+          <div class="dictation-answer">
+            <input type="text" class="form-input" id="dictationInput" placeholder="请输入英文单词" autofocus>
+            <button class="btn btn-primary" onclick="submitDictationAnswer()">确定</button>
+          </div>
+        </div>
+        <div style="text-align: center;">
+          <button class="btn btn-secondary" onclick="cancelDictation()">取消默写</button>
+        </div>
+      </div>
+      
+      <!-- 默写结果 -->
+      <div class="card" id="dictationResult" style="display: none; max-width: 800px; margin: 50px auto;">
+        <div class="card-header">
+          <h3 class="card-title">默写结果</h3>
+        </div>
+        <div style="text-align: center; margin-bottom: 30px;">
+          <div style="font-size: 48px; font-weight: bold; color: var(--primary-color);" id="dictationScore">0</div>
+          <div style="font-size: 18px; color: var(--text-secondary);">分</div>
+        </div>
+        <div id="dictationWrongList"></div>
+        <div style="text-align: center; margin-top: 20px;">
+          <button class="btn btn-primary" onclick="resetDictation()">再来一次</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 学习统计 -->
+    <div id="tab-statistics" class="tab-content">
+      <div class="page-header">
+        <h1 class="page-title">学习统计</h1>
+      </div>
+      
+      <div class="card" style="max-width: 600px;">
+        <div class="form-group">
+          <label class="form-label">选择学生</label>
+          <select class="form-select" id="statsStudentId" onchange="loadStatistics()">
+            <option value="">选择学生</option>
+          </select>
+        </div>
+      </div>
+      
+      <div id="statsContainer" style="display: none;">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="value" id="statsTotalLessons">-</div>
+            <div class="label">总课时数</div>
+          </div>
+          <div class="stat-card">
+            <div class="value" id="statsKnowWords">-</div>
+            <div class="label">已掌握单词</div>
+          </div>
+          <div class="stat-card">
+            <div class="value" id="statsUnknownWords">-</div>
+            <div class="label">未掌握单词</div>
+          </div>
+          <div class="stat-card">
+            <div class="value" id="statsWeakWords">-</div>
+            <div class="label">薄弱单词</div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">分年级掌握率</h3>
+          </div>
+          <div class="chart-container" id="gradeChart"></div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">高频错题 TOP 10</h3>
+          </div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>排名</th>
+                  <th>英文单词</th>
+                  <th>中文释义</th>
+                  <th>错误次数</th>
+                </tr>
+              </thead>
+              <tbody id="wrongWordsList"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 个人中心 -->
+    <div id="tab-profile" class="tab-content">
+      <div class="page-header">
+        <h1 class="page-title">个人中心</h1>
+      </div>
+      
+      <div class="card" style="max-width: 500px;">
+        <h3 style="margin-bottom: 20px;">修改密码</h3>
+        <form id="changePwdForm">
+          <div class="form-group">
+            <label class="form-label">旧密码</label>
+            <input type="password" class="form-input" id="oldPwd" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">新密码</label>
+            <input type="password" class="form-input" id="newPwd" required minlength="6">
+            <small style="color: #999;">密码至少6位，需包含字母和数字</small>
+          </div>
+          <div class="form-group">
+            <label class="form-label">确认新密码</label>
+            <input type="password" class="form-input" id="confirmPwd" required>
+          </div>
+          <button type="submit" class="btn btn-primary">确认修改</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新增/编辑学生弹窗 -->
+  <div class="modal" id="studentModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="studentModalTitle">新增学生</h3>
+        <button class="modal-close" onclick="closeModal('studentModal')">&times;</button>
+      </div>
+      <form id="studentForm">
+        <input type="hidden" id="studentId">
+        <div class="form-group">
+          <label class="form-label">账号</label>
+          <input type="text" class="form-input" id="studentUsername" required>
+        </div>
+        <div class="form-group" id="studentPwdGroup">
+          <label class="form-label">初始密码</label>
+          <input type="password" class="form-input" id="studentPassword">
+        </div>
+        <div class="form-group">
+          <label class="form-label">姓名</label>
+          <input type="text" class="form-input" id="studentName" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">年级</label>
+          <select class="form-select" id="studentGrade" required>
+            <option value="1">一年级</option>
+            <option value="2">二年级</option>
+            <option value="3">三年级</option>
+            <option value="4">四年级</option>
+            <option value="5">五年级</option>
+            <option value="6">六年级</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">保存</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 课时详情弹窗 -->
+  <div class="modal" id="lessonDetailModal">
+    <div class="modal-content" style="max-width: 900px;">
+      <div class="modal-header">
+        <h3>课时详情</h3>
+        <button class="modal-close" onclick="closeModal('lessonDetailModal')">&times;</button>
+      </div>
+      <div id="lessonDetailContent"></div>
+    </div>
+  </div>
+
+  <script src="/js/utils.js"></script>
+  <script src="/js/teacher.js"></script>
+</body>
+</html>
