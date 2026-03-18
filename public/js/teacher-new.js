@@ -233,13 +233,24 @@ async function startTeaching() {
       return;
     }
     
-    // 根据数量筛选（随机）
+    // 根据范围类型处理顺序
+    if (wordScope === 'all-random') {
+      // 乱序：随机打乱
+      words = words.sort(() => Math.random() - 0.5);
+    }
+    // all-order: 正序，保持原有顺序
+    
+    // 根据数量筛选
     if (wordCount !== 'all') {
       const count = parseInt(wordCount);
       if (words.length > count) {
-        // 随机打乱
-        words = words.sort(() => Math.random() - 0.5);
-        words = words.slice(0, count);
+        if (wordScope === 'all-random') {
+          // 乱序模式下已经打乱，直接截取
+          words = words.slice(0, count);
+        } else {
+          // 正序模式下，取前N个
+          words = words.slice(0, count);
+        }
       }
     }
   }
