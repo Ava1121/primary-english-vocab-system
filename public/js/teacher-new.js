@@ -685,6 +685,51 @@ function generateFillBlank(word) {
   };
 }
 
+// 渲染填空字母格子
+function renderFillWordBoxes(word, blankPositions) {
+  const container = document.getElementById('dictationFillWord');
+  container.innerHTML = '';
+  
+  const letters = word.split('');
+  letters.forEach((letter, index) => {
+    const box = document.createElement('div');
+    box.className = 'fill-letter-box';
+    box.id = `fill-box-${index}`;
+    
+    if (blankPositions.includes(index)) {
+      box.classList.add('blank');
+      box.textContent = '_';
+    } else {
+      box.classList.add('normal');
+      box.textContent = letter;
+    }
+    
+    container.appendChild(box);
+  });
+}
+
+// 更新填空格子显示
+function updateFillBoxes(inputValue) {
+  if (dictationMode !== 'fill') return;
+  
+  const fillData = dictationFillData[dictationIndex];
+  const positions = fillData.positions;
+  const inputLetters = inputValue.split('');
+  
+  positions.forEach((pos, index) => {
+    const box = document.getElementById(`fill-box-${pos}`);
+    if (box) {
+      if (inputLetters[index]) {
+        box.textContent = inputLetters[index].toUpperCase();
+        box.classList.add('filled');
+      } else {
+        box.textContent = '_';
+        box.classList.remove('filled');
+      }
+    }
+  });
+}
+
 function showDictationQuestion() {
   const currentWord = dictationWords[dictationIndex];
   
@@ -727,7 +772,10 @@ function showDictationQuestion() {
     const fillData = dictationFillData[dictationIndex];
     document.getElementById('dictationQuestion').textContent = currentWord.cn;
     document.getElementById('dictationHint').textContent = `完整单词: ${currentWord.en}`;
-    document.getElementById('dictationFillWord').textContent = fillData.display;
+    
+    // 动态生成字母格子
+    renderFillWordBoxes(currentWord.en, fillData.positions);
+    
     document.getElementById('dictationFillHint').textContent = `请按顺序填写 ${fillData.hiddenLetters.length} 个缺失的字母`;
     input.placeholder = `请输入缺失的字母（${fillData.hiddenLetters.length}个）`;
   }
@@ -770,10 +818,16 @@ function submitDictationAnswer() {
 document.addEventListener('DOMContentLoaded', function() {
   const input = document.getElementById('dictationInput');
   if (input) {
+    // 回车提交
     input.addEventListener('keyup', function(e) {
       if (e.keyCode === 13) {
         submitDictationAnswer();
       }
+    });
+    
+    // 实时更新填空格子
+    input.addEventListener('input', function(e) {
+      updateFillBoxes(e.target.value);
     });
   }
 });
