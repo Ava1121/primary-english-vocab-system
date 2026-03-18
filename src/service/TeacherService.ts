@@ -86,6 +86,47 @@ export class TeacherService {
   }
 
   /**
+   * 删除老师
+   */
+  static async deleteTeacher(id: string) {
+    // 检查老师是否有学生
+    const studentCount = await Student.countDocuments({ teacherId: id });
+    if (studentCount > 0) {
+      throw new Error('该老师名下还有学生，无法删除');
+    }
+
+    const teacher = await User.findByIdAndDelete(id);
+    if (!teacher) {
+      throw new Error('老师不存在');
+    }
+    return true;
+  }
+
+  /**
+   * 验证管理员二级密码
+   */
+  static async verifySecondaryPassword(adminId: string, password: string) {
+    const admin = await User.findById(adminId);
+    if (!admin) {
+      throw new Error('管理员不存在');
+    }
+
+    if (!admin.secondaryPassword) {
+      // 如果没有设置二级密码，使用默认密码 QAZWSX
+      if (password === 'QAZWSX') {
+        return true;
+      }
+      throw new Error('二级密码错误');
+    }
+
+    const isMatch = await comparePassword(password, admin.secondaryPassword);
+    if (!isMatch) {
+      throw new Error('二级密码错误');
+    }
+    return true;
+  }
+
+  /**
    * 获取老师名下学生
    */
   static async getTeacherStudents(teacherId: string) {

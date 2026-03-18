@@ -65,12 +65,39 @@ export const status = async (request: FastifyRequest, reply: FastifyReply) => {
   try {
     const query = request.query as any;
 
-    if (!query.id || !query.status) {
+    if (!query.id || query.status === undefined) {
       return reply.status(400).send(ResponseUtil.error('参数错误'));
     }
 
     const teacher = await TeacherService.updateStatus(query.id, parseInt(query.status));
     return reply.send(ResponseUtil.success(teacher, '状态更新成功'));
+  } catch (error: any) {
+    return reply.status(400).send(ResponseUtil.error(error.message));
+  }
+};
+
+/**
+ * 删除老师
+ */
+export const del = async (request: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const body = request.body as any;
+    const adminId = (request as any).user?.id;
+
+    if (!body.id) {
+      return reply.status(400).send(ResponseUtil.error('老师ID不能为空'));
+    }
+
+    if (!body.secondaryPassword) {
+      return reply.status(400).send(ResponseUtil.error('请输入二级密码'));
+    }
+
+    // 验证二级密码
+    await TeacherService.verifySecondaryPassword(adminId, body.secondaryPassword);
+
+    // 删除老师
+    await TeacherService.deleteTeacher(body.id);
+    return reply.send(ResponseUtil.success(null, '删除成功'));
   } catch (error: any) {
     return reply.status(400).send(ResponseUtil.error(error.message));
   }

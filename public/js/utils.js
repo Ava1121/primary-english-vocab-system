@@ -77,8 +77,11 @@ const http = {
     });
   },
 
-  delete(url) {
-    return this.request(url, { method: 'DELETE' });
+  delete(url, body) {
+    return this.request(url, { 
+      method: 'DELETE',
+      body: body ? JSON.stringify(body) : undefined
+    });
   }
 };
 

@@ -7,6 +7,7 @@ export interface IUser extends Document {
   realName: string;
   role: 'admin' | 'teacher';
   status: number; // 1=启用, 0=禁用
+  secondaryPassword?: string; // 二级密码（管理员专用）
   createTime: Date;
   updateTime: Date;
 }
@@ -38,6 +39,10 @@ const UserSchema: Schema = new Schema(
       type: Number,
       required: true,
       default: 1,
+    },
+    secondaryPassword: {
+      type: String,
+      required: false,
     },
   },
   {
