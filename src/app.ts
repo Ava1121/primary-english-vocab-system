@@ -194,6 +194,11 @@ fastify.get(
   teacherTeach.words
 );
 fastify.get(
+  '/api/teacher/teach/newWords',
+  { preHandler: [authMiddleware, roleMiddleware(['teacher'])] },
+  teacherTeach.newWords
+);
+fastify.get(
   '/api/teacher/teach/weakWords',
   { preHandler: [authMiddleware, roleMiddleware(['teacher'])] },
   teacherTeach.weakWords

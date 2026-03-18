@@ -205,12 +205,12 @@ async function startTeaching() {
   
   // 根据单词范围获取单词
   if (wordScope === 'new') {
-    // 仅获取生词（薄弱单词）
-    const res = await http.get(`/teacher/teach/weakWords?studentId=${studentId}&grade=${grade}`);
+    // 仅获取生词（除已掌握外的单词）
+    const res = await http.get(`/teacher/teach/newWords?studentId=${studentId}&grade=${grade}`);
     if (res.code === 200) {
       words = res.data;
       if (words.length === 0) {
-        showToast('该学生没有生词记录', 'error');
+        showToast('该学生已掌握所有单词，没有生词', 'error');
         return;
       }
     } else {
