@@ -25,6 +25,11 @@ let dictationFillData = []; // 填空模式的题目数据
 let dictationShowingFeedback = false; // 是否正在显示答题反馈
 let dictationCurrentCorrect = false; // 当前题目是否正确
 
+// 课后默写相关变量
+let lessonDictationWords = []; // 课时单词缓存
+let lessonDictationStudentId = ''; // 课时学生ID
+let isLessonDictation = false; // 是否是课后默写模式
+
 // 切换标签页
 function switchTab(tabName) {
   document.querySelectorAll('.sidebar-menu li').forEach(item => item.classList.remove('active'));
@@ -447,6 +452,7 @@ async function loadLessons(page = 1) {
           <td>
             <button class="btn btn-sm btn-secondary" onclick="showLessonDetail('${lesson._id}')">详情</button>
             <button class="btn btn-sm btn-primary" onclick="reteachLesson('${lesson._id}')">重教</button>
+            <button class="btn btn-sm btn-success" onclick="startLessonDictation('${lesson._id}', '${studentId}')">默写</button>
           </td>
         </tr>
       `;
@@ -516,7 +522,83 @@ async function reteachLesson(lessonId) {
   }
 }
 
-// ========== 薄弱单词库 ==========
+// 开始课后默写
+async function startLessonDictation(lessonId, studentId) {
+  const res = await http.get(`/teacher/lessons/detail?id=${lessonId}`);
+  if (res.code === 200) {
+    const lesson = res.data;
+    // 合并已掌握和未掌握的单词
+    const allWords = [...(lesson.knowWords || []), ...(lesson.unknownWords || [])];
+    
+    if (allWords.length === 0) {
+      showToast('该课时没有单词可默写', 'error');
+      return;
+    }
+    
+    // 缓存课时单词、学生ID和年级
+    lessonDictationWords = allWords;
+    lessonDictationStudentId = studentId;
+    isLessonDictation = true;
+    
+    // 设置年级（用于保存默写结果）
+    currentGrade = lesson.grade || 1;
+    
+    // 跳转到默写练习界面
+    switchTab('dictation');
+    
+    // 显示课后默写选项
+    document.getElementById('dictationConfig').style.display = 'none';
+    document.getElementById('lessonDictationConfig').style.display = 'block';
+    
+    // 显示单词预览
+    let previewHtml = '<div style="display: flex; flex-wrap: wrap; gap: 8px;">';
+    allWords.forEach(w => {
+      previewHtml += `<span style="padding: 5px 12px; background: #e8f4f8; border-radius: 4px; font-size: 14px;"><strong>${w.en}</strong> ${w.cn}</span>`;
+    });
+    previewHtml += '</div>';
+    document.getElementById('lessonDictationWordsPreview').innerHTML = previewHtml;
+    document.getElementById('lessonDictationCount').textContent = allWords.length;
+  } else {
+    showToast(res.msg, 'error');
+  }
+}
+
+// 开始课后默写练习
+function startLessonDictationPractice() {
+  dictationWords = lessonDictationWords;
+  dictationIndex = 0;
+  dictationAnswers = [];
+  dictationFillData = [];
+  
+  // 设置学生ID，用于保存默写结果
+  currentStudentId = lessonDictationStudentId;
+  
+  // 获取选择的默写模式
+  const modeRadio = document.querySelector('input[name="lessonDictationMode"]:checked');
+  dictationMode = modeRadio ? modeRadio.value : 'en';
+  
+  // 如果是填空模式，预生成填空数据
+  if (dictationMode === 'fill') {
+    dictationWords.forEach(word => {
+      dictationFillData.push(generateFillBlank(word.en));
+    });
+  }
+  
+  document.getElementById('lessonDictationConfig').style.display = 'none';
+  document.getElementById('dictationContainer').style.display = 'block';
+  document.getElementById('dictationResult').style.display = 'none';
+  
+  showDictationQuestion();
+}
+
+// 取消课后默写
+function cancelLessonDictation() {
+  isLessonDictation = false;
+  lessonDictationWords = [];
+  lessonDictationStudentId = '';
+  document.getElementById('lessonDictationConfig').style.display = 'none';
+  document.getElementById('dictationConfig').style.display = 'block';
+}
 
 function initWeak() {
   loadStudentOptions();
@@ -592,7 +674,16 @@ async function clearWeakWords() {
 // ========== 默写练习 ==========
 
 async function initDictation() {
+  // 如果是课后默写模式，不初始化普通默写配置
+  if (isLessonDictation) {
+    return;
+  }
+  
   await loadStudentOptions();
+  
+  // 确保显示普通默写配置
+  document.getElementById('dictationConfig').style.display = 'block';
+  document.getElementById('lessonDictationConfig').style.display = 'none';
   
   const studentId = document.getElementById('dictationStudentId').value;
   if (studentId) {
@@ -1009,7 +1100,12 @@ function cancelDictation() {
 }
 
 function resetDictation() {
-  document.getElementById('dictationConfig').style.display = 'block';
+  // 判断是课后默写还是普通默写
+  if (isLessonDictation) {
+    document.getElementById('lessonDictationConfig').style.display = 'block';
+  } else {
+    document.getElementById('dictationConfig').style.display = 'block';
+  }
   document.getElementById('dictationContainer').style.display = 'none';
   document.getElementById('dictationResult').style.display = 'none';
   dictationWords = [];

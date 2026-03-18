@@ -965,6 +965,50 @@
           <button class="btn btn-primary" onclick="resetDictation()">再来一次</button>
         </div>
       </div>
+      
+      <!-- 课后默写练习配置 -->
+      <div class="full-width-config" id="lessonDictationConfig" style="display: none;">
+        <h3>📚 课后默写练习</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">以下是将要默写的单词（共 <span id="lessonDictationCount">0</span> 个）：</p>
+        
+        <div id="lessonDictationWordsPreview" style="margin-bottom: 25px;"></div>
+        
+        <!-- 默写模式选择 -->
+        <div class="form-group" style="margin-top: 20px;">
+          <label class="form-label">默写模式</label>
+          <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <label class="mode-option" style="flex: 1; min-width: 180px; cursor: pointer;">
+              <input type="radio" name="lessonDictationMode" value="en" checked style="display: none;">
+              <div class="mode-card" style="padding: 20px; border: 2px solid var(--border-color); border-radius: 8px; text-align: center; transition: all 0.3s;">
+                <div style="font-size: 28px; margin-bottom: 8px;">📝</div>
+                <div style="font-weight: 600; font-size: 16px;">默写英文</div>
+                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 5px;">看中文写英文</div>
+              </div>
+            </label>
+            <label class="mode-option" style="flex: 1; min-width: 180px; cursor: pointer;">
+              <input type="radio" name="lessonDictationMode" value="cn" style="display: none;">
+              <div class="mode-card" style="padding: 20px; border: 2px solid var(--border-color); border-radius: 8px; text-align: center; transition: all 0.3s;">
+                <div style="font-size: 28px; margin-bottom: 8px;">🇨🇳</div>
+                <div style="font-weight: 600; font-size: 16px;">默写中文</div>
+                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 5px;">看英文写中文</div>
+              </div>
+            </label>
+            <label class="mode-option" style="flex: 1; min-width: 180px; cursor: pointer;">
+              <input type="radio" name="lessonDictationMode" value="fill" style="display: none;">
+              <div class="mode-card" style="padding: 20px; border: 2px solid var(--border-color); border-radius: 8px; text-align: center; transition: all 0.3s;">
+                <div style="font-size: 28px; margin-bottom: 8px;">🔤</div>
+                <div style="font-weight: 600; font-size: 16px;">字母填空</div>
+                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 5px;">补全缺失字母</div>
+              </div>
+            </label>
+          </div>
+        </div>
+        
+        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-color); display: flex; gap: 15px;">
+          <button class="btn btn-primary" style="padding: 15px 40px; font-size: 16px;" onclick="startLessonDictationPractice()">开始默写</button>
+          <button class="btn btn-secondary" style="padding: 15px 40px; font-size: 16px;" onclick="cancelLessonDictation()">取消</button>
+        </div>
+      </div>
     </div>
 
     <!-- 学习统计 -->
