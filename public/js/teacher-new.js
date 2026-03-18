@@ -22,6 +22,8 @@ let dictationIndex = 0;
 let dictationAnswers = [];
 let dictationMode = 'en'; // 默认模式：en-默写英文, cn-默写中文, fill-字母填空
 let dictationFillData = []; // 填空模式的题目数据
+let dictationShowingFeedback = false; // 是否正在显示答题反馈
+let dictationCurrentCorrect = false; // 当前题目是否正确
 
 // 切换标签页
 function switchTab(tabName) {
@@ -748,6 +750,14 @@ function showDictationQuestion() {
   const questionArea = document.getElementById('dictationQuestionArea');
   const fillArea = document.getElementById('dictationFillArea');
   const input = document.getElementById('dictationInput');
+  const feedback = document.getElementById('dictationFeedback');
+  const submitBtn = document.getElementById('dictationSubmitBtn');
+  
+  // 隐藏反馈区域
+  feedback.style.display = 'none';
+  dictationShowingFeedback = false;
+  submitBtn.textContent = '确定';
+  input.disabled = false;
   
   // 根据模式显示不同的题目
   if (dictationMode === 'en') {
@@ -771,7 +781,8 @@ function showDictationQuestion() {
     
     const fillData = dictationFillData[dictationIndex];
     document.getElementById('dictationQuestion').textContent = currentWord.cn;
-    document.getElementById('dictationHint').textContent = `完整单词: ${currentWord.en}`;
+    // 不显示完整单词，只有提交后才显示
+    document.getElementById('dictationHint').textContent = '';
     
     // 动态生成字母格子
     renderFillWordBoxes(currentWord.en, fillData.positions);
@@ -784,6 +795,33 @@ function showDictationQuestion() {
   input.focus();
 }
 
+// 处理默写操作（提交答案或继续下一题）
+function handleDictationAction() {
+  if (dictationShowingFeedback) {
+    // 当前正在显示反馈，点击确定继续下一题
+    nextQuestion();
+  } else {
+    // 提交答案
+    submitDictationAnswer();
+  }
+}
+
+// 检查答案是否正确
+function checkAnswer(answer, currentWord) {
+  if (dictationMode === 'en') {
+    // 默写英文模式：比较英文（大小写不敏感）
+    return currentWord.en.toLowerCase() === answer.toLowerCase().trim();
+  } else if (dictationMode === 'cn') {
+    // 默写中文模式：比较中文
+    return currentWord.cn.trim() === answer.trim();
+  } else if (dictationMode === 'fill') {
+    // 字母填空模式：比较填写的字母
+    const correctFill = dictationFillData[dictationIndex].answer;
+    return correctFill.toLowerCase() === answer.toLowerCase().trim();
+  }
+  return false;
+}
+
 function submitDictationAnswer() {
   const answer = document.getElementById('dictationInput').value.trim();
   
@@ -792,11 +830,16 @@ function submitDictationAnswer() {
     return;
   }
   
-  // 根据模式构建不同的答案数据
+  const currentWord = dictationWords[dictationIndex];
+  const isCorrect = checkAnswer(answer, currentWord);
+  dictationCurrentCorrect = isCorrect;
+  
+  // 记录答案
   const answerData = {
-    wordId: dictationWords[dictationIndex]._id,
+    wordId: currentWord._id,
     answer,
-    mode: dictationMode
+    mode: dictationMode,
+    isCorrect
   };
   
   // 填空模式额外存储正确答案
@@ -806,6 +849,59 @@ function submitDictationAnswer() {
   
   dictationAnswers.push(answerData);
   
+  // 显示反馈
+  showAnswerFeedback(isCorrect, currentWord, answer);
+}
+
+// 显示答题反馈
+function showAnswerFeedback(isCorrect, currentWord, userAnswer) {
+  const feedback = document.getElementById('dictationFeedback');
+  const feedbackIcon = document.getElementById('dictationFeedbackIcon');
+  const feedbackText = document.getElementById('dictationFeedbackText');
+  const correctAnswerEl = document.getElementById('dictationCorrectAnswer');
+  const input = document.getElementById('dictationInput');
+  const submitBtn = document.getElementById('dictationSubmitBtn');
+  const hint = document.getElementById('dictationHint');
+  
+  dictationShowingFeedback = true;
+  input.disabled = true;
+  submitBtn.textContent = '继续';
+  
+  if (isCorrect) {
+    feedback.style.background = '#d4edda';
+    feedback.style.border = '2px solid #28a745';
+    feedbackIcon.textContent = '✅';
+    feedbackText.textContent = '回答正确！';
+    feedbackText.style.color = '#28a745';
+    correctAnswerEl.textContent = '';
+    
+    // 显示完整单词
+    if (dictationMode === 'fill') {
+      hint.textContent = `完整单词: ${currentWord.en}`;
+    }
+  } else {
+    feedback.style.background = '#f8d7da';
+    feedback.style.border = '2px solid #dc3545';
+    feedbackIcon.textContent = '❌';
+    feedbackText.textContent = '回答错误！';
+    feedbackText.style.color = '#dc3545';
+    
+    // 显示正确答案
+    if (dictationMode === 'en') {
+      correctAnswerEl.textContent = `正确答案: ${currentWord.en}`;
+    } else if (dictationMode === 'cn') {
+      correctAnswerEl.textContent = `正确答案: ${currentWord.cn}`;
+    } else if (dictationMode === 'fill') {
+      correctAnswerEl.textContent = `正确答案: ${dictationFillData[dictationIndex].answer}`;
+      hint.textContent = `完整单词: ${currentWord.en}`;
+    }
+  }
+  
+  feedback.style.display = 'block';
+}
+
+// 继续下一题
+function nextQuestion() {
   dictationIndex++;
   
   if (dictationIndex >= dictationWords.length) {
@@ -821,7 +917,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 回车提交
     input.addEventListener('keyup', function(e) {
       if (e.keyCode === 13) {
-        submitDictationAnswer();
+        handleDictationAction();
       }
     });
     
@@ -833,6 +929,24 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function finishDictation() {
+  // 计算本地结果
+  let correctNum = 0;
+  const wrongWords = [];
+  
+  dictationAnswers.forEach((answerData, index) => {
+    if (answerData.isCorrect) {
+      correctNum++;
+    } else {
+      wrongWords.push({
+        en: dictationWords[index].en,
+        cn: dictationWords[index].cn
+      });
+    }
+  });
+  
+  const score = (correctNum / dictationWords.length) * 100;
+  
+  // 提交到后端保存记录
   const res = await http.post('/teacher/dictation/submit', {
     studentId: currentStudentId,
     grade: currentGrade,
@@ -841,28 +955,24 @@ async function finishDictation() {
     mode: dictationMode
   });
   
-  if (res.code === 200) {
-    document.getElementById('dictationContainer').style.display = 'none';
-    document.getElementById('dictationResult').style.display = 'block';
-    
-    document.getElementById('dictationScore').textContent = res.data.score;
-    
-    if (res.data.wrongWords && res.data.wrongWords.length > 0) {
-      let html = '<h4 style="margin-bottom: 15px;">错题列表</h4><div style="display: flex; flex-wrap: wrap; gap: 10px;">';
-      res.data.wrongWords.forEach(w => {
-        html += `<div style="padding: 10px; background: #f8d7da; border-radius: 4px;"><strong>${w.en}</strong> ${w.cn}</div>`;
-      });
-      html += '</div>';
-      document.getElementById('dictationWrongList').innerHTML = html;
-    } else {
-      document.getElementById('dictationWrongList').innerHTML = '<p style="text-align: center; color: var(--primary-color);">🎉 全部正确！</p>';
-    }
-    
-    // 刷新历史记录
-    loadDictationHistory(currentStudentId);
+  document.getElementById('dictationContainer').style.display = 'none';
+  document.getElementById('dictationResult').style.display = 'block';
+  
+  document.getElementById('dictationScore').textContent = score.toFixed(1);
+  
+  if (wrongWords.length > 0) {
+    let html = '<h4 style="margin-bottom: 15px;">错题列表</h4><div style="display: flex; flex-wrap: wrap; gap: 10px;">';
+    wrongWords.forEach(w => {
+      html += `<div style="padding: 10px; background: #f8d7da; border-radius: 4px;"><strong>${w.en}</strong> ${w.cn}</div>`;
+    });
+    html += '</div>';
+    document.getElementById('dictationWrongList').innerHTML = html;
   } else {
-    showToast(res.msg, 'error');
+    document.getElementById('dictationWrongList').innerHTML = '<p style="text-align: center; color: var(--primary-color);">🎉 全部正确！</p>';
   }
+  
+  // 刷新历史记录
+  loadDictationHistory(currentStudentId);
 }
 
 function cancelDictation() {

@@ -839,8 +839,16 @@
           </div>
           
           <input type="text" class="form-input" id="dictationInput" placeholder="请输入英文单词" style="font-size: 18px; padding: 15px; text-align: center;" autofocus>
+          
+          <!-- 答题反馈区域 -->
+          <div id="dictationFeedback" style="display: none; margin: 20px 0; padding: 20px; border-radius: 8px;">
+            <div id="dictationFeedbackIcon" style="font-size: 48px; margin-bottom: 10px;"></div>
+            <div id="dictationFeedbackText" style="font-size: 18px; font-weight: bold;"></div>
+            <div id="dictationCorrectAnswer" style="margin-top: 10px; font-size: 16px; color: var(--text-secondary);"></div>
+          </div>
+          
           <div style="margin-top: 20px;">
-            <button class="btn btn-primary" style="padding: 15px 50px; font-size: 16px;" onclick="submitDictationAnswer()">确定</button>
+            <button class="btn btn-primary" id="dictationSubmitBtn" style="padding: 15px 50px; font-size: 16px;" onclick="handleDictationAction()">确定</button>
           </div>
           <div style="margin-top: 20px;">
             <button class="btn btn-secondary" onclick="cancelDictation()">取消默写</button>
