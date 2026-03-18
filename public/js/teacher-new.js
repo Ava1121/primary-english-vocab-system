@@ -629,7 +629,7 @@ async function startDictation() {
       });
     }
     
-    document.querySelector('.config-panel').style.display = 'none';
+    document.getElementById('dictationConfig').style.display = 'none';
     document.getElementById('dictationContainer').style.display = 'block';
     document.getElementById('dictationResult').style.display = 'none';
     
@@ -981,7 +981,7 @@ function cancelDictation() {
 }
 
 function resetDictation() {
-  document.querySelector('.config-panel').style.display = 'block';
+  document.getElementById('dictationConfig').style.display = 'block';
   document.getElementById('dictationContainer').style.display = 'none';
   document.getElementById('dictationResult').style.display = 'none';
   dictationWords = [];
