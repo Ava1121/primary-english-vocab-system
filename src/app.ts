@@ -11,6 +11,7 @@ import * as publicAuth from './controller/public/auth';
 import * as adminDashboard from './controller/admin/dashboard';
 import * as adminWords from './controller/admin/words';
 import * as adminTeachers from './controller/admin/teachers';
+import * as adminBooks from './controller/admin/books';
 import * as teacherDashboard from './controller/teacher/dashboard';
 import * as teacherStudents from './controller/teacher/students';
 import * as teacherLessons from './controller/teacher/lessons';
@@ -120,6 +121,63 @@ fastify.get(
   '/api/admin/teachers/students',
   { preHandler: [authMiddleware, roleMiddleware(['admin'])] },
   adminTeachers.students
+);
+
+// 词书管理
+fastify.get(
+  '/api/admin/books/list',
+  { preHandler: [authMiddleware, roleMiddleware(['admin'])] },
+  adminBooks.list
+);
+fastify.get(
+  '/api/admin/books/all',
+  { preHandler: [authMiddleware, roleMiddleware(['admin'])] },
+  adminBooks.allBooks
+);
+fastify.get(
+  '/api/admin/books/detail',
+  { preHandler: [authMiddleware, roleMiddleware(['admin'])] },
+  adminBooks.detail
+);
+fastify.post(
+  '/api/admin/books/add',
+  { preHandler: [authMiddleware, roleMiddleware(['admin'])] },
+  adminBooks.add
+);
+fastify.put(
+  '/api/admin/books/edit',
+  { preHandler: [authMiddleware, roleMiddleware(['admin'])] },
+  adminBooks.edit
+);
+fastify.delete(
+  '/api/admin/books/del',
+  { preHandler: [authMiddleware, roleMiddleware(['admin'])] },
+  adminBooks.del
+);
+fastify.get(
+  '/api/admin/books/words',
+  { preHandler: [authMiddleware, roleMiddleware(['admin'])] },
+  adminBooks.words
+);
+fastify.post(
+  '/api/admin/books/words/add',
+  { preHandler: [authMiddleware, roleMiddleware(['admin'])] },
+  adminBooks.addWord
+);
+fastify.post(
+  '/api/admin/books/words/import',
+  { preHandler: [authMiddleware, roleMiddleware(['admin'])] },
+  adminBooks.importWords
+);
+fastify.put(
+  '/api/admin/books/words/edit',
+  { preHandler: [authMiddleware, roleMiddleware(['admin'])] },
+  adminBooks.editWord
+);
+fastify.delete(
+  '/api/admin/books/words/del',
+  { preHandler: [authMiddleware, roleMiddleware(['admin'])] },
+  adminBooks.deleteWord
 );
 
 // 管理员个人中心

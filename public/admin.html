@@ -83,6 +83,18 @@
       border-radius: 4px;
       font-size: 13px;
     }
+    
+    .form-row {
+      display: flex;
+      gap: 15px;
+    }
+    
+    .book-words-toolbar {
+      padding: 10px;
+      background: var(--bg-color);
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
   </style>
 </head>
 <body>
@@ -93,6 +105,7 @@
     </div>
     <ul class="sidebar-menu">
       <li class="active" data-tab="dashboard">📊 数据统计</li>
+      <li data-tab="books">📖 词书管理</li>
       <li data-tab="words">📚 单词管理</li>
       <li data-tab="teachers">👨‍🏫 老师管理</li>
       <li data-tab="profile">⚙️ 个人中心</li>
@@ -132,6 +145,52 @@
           <h3 class="card-title">各年级单词数量</h3>
         </div>
         <div id="gradeStats" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; text-align: center;"></div>
+      </div>
+    </div>
+
+    <!-- 词书管理 -->
+    <div id="tab-books" class="tab-content">
+      <div class="page-header">
+        <h1 class="page-title">词书管理</h1>
+        <div>
+          <button class="btn btn-primary" onclick="showAddBookModal()">➕ 新增词书</button>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="search-bar">
+          <select class="form-select" id="bookGradeFilter" style="width: 150px;" onchange="loadBooks()">
+            <option value="">全部年级</option>
+            <option value="1">一年级</option>
+            <option value="2">二年级</option>
+            <option value="3">三年级</option>
+            <option value="4">四年级</option>
+            <option value="5">五年级</option>
+            <option value="6">六年级</option>
+          </select>
+          <input type="text" class="form-input" id="bookKeyword" placeholder="搜索词书名称" onkeyup="if(event.keyCode===13)loadBooks()">
+          <button class="btn btn-primary" onclick="loadBooks()">搜索</button>
+        </div>
+        
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>词书名称</th>
+                <th>年级</th>
+                <th>学期</th>
+                <th>出版社</th>
+                <th>单词数</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="bookList"></tbody>
+          </table>
+        </div>
+        
+        <div id="bookPagination"></div>
       </div>
     </div>
 
@@ -337,7 +396,139 @@
     </div>
   </div>
 
-  <script src="/js/utils.js"></script>
+  <!-- 新增/编辑词书弹窗 -->
+  <div class="modal" id="bookModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="bookModalTitle">新增词书</h3>
+        <button class="modal-close" onclick="closeModal('bookModal')">&times;</button>
+      </div>
+      <form id="bookForm">
+        <input type="hidden" id="bookId">
+        <div class="form-group">
+          <label class="form-label">词书名称</label>
+          <input type="text" class="form-input" id="bookName" required placeholder="如：三年级上册">
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">年级</label>
+            <select class="form-select" id="bookGrade" required>
+              <option value="1">一年级</option>
+              <option value="2">二年级</option>
+              <option value="3">三年级</option>
+              <option value="4">四年级</option>
+              <option value="5">五年级</option>
+              <option value="6">六年级</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">学期</label>
+            <select class="form-select" id="bookSemester" required>
+              <option value="上">上册</option>
+              <option value="下">下册</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">出版社</label>
+          <select class="form-select" id="bookPublisher" required>
+            <option value="新启航">新启航</option>
+            <option value="外研社">外研社</option>
+            <option value="人教版">人教版</option>
+            <option value="川教版">川教版</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">描述（可选）</label>
+          <textarea class="form-input" id="bookDescription" rows="2" placeholder="词书描述"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">保存</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 查看词书单词弹窗 -->
+  <div class="modal" id="bookWordsModal">
+    <div class="modal-content" style="max-width: 900px; width: 95%;">
+      <div class="modal-header">
+        <h3 id="bookWordsTitle">词书单词列表</h3>
+        <button class="modal-close" onclick="closeModal('bookWordsModal')">&times;</button>
+      </div>
+      <div class="book-words-toolbar" style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <button class="btn btn-primary" onclick="showAddBookWordModal()">➕ 添加单词</button>
+        <button class="btn btn-secondary" onclick="showImportBookWordsModal()">📥 批量导入</button>
+      </div>
+      <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>序号</th>
+              <th>英文</th>
+              <th>音标</th>
+              <th>中文</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="bookWordsList"></tbody>
+        </table>
+      </div>
+      <div id="bookWordsPagination" style="margin-top: 15px;"></div>
+    </div>
+  </div>
+
+  <!-- 添加词书单词弹窗 -->
+  <div class="modal" id="bookWordModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="bookWordModalTitle">添加单词</h3>
+        <button class="modal-close" onclick="closeModal('bookWordModal')">&times;</button>
+      </div>
+      <form id="bookWordForm">
+        <input type="hidden" id="bookWordId">
+        <input type="hidden" id="currentBookId">
+        <div class="form-group">
+          <label class="form-label">英文单词</label>
+          <input type="text" class="form-input" id="bookWordEn" required placeholder="如：apple">
+        </div>
+        <div class="form-group">
+          <label class="form-label">音标</label>
+          <input type="text" class="form-input" id="bookWordPhonetic" placeholder="如：/ˈæpl/">
+        </div>
+        <div class="form-group">
+          <label class="form-label">中文释义</label>
+          <input type="text" class="form-input" id="bookWordCn" required placeholder="如：苹果">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">保存</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 批量导入词书单词弹窗 -->
+  <div class="modal" id="importBookWordsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>批量导入单词</h3>
+        <button class="modal-close" onclick="closeModal('importBookWordsModal')">&times;</button>
+      </div>
+      <div>
+        <div class="form-group">
+          <label class="form-label">选择JSON文件</label>
+          <input type="file" class="form-input" id="importBookWordsFile" accept=".json">
+        </div>
+        <div class="import-info">
+          <p><strong>JSON格式示例：</strong></p>
+          <pre style="background: white; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px;">[
+  {"en": "apple", "cn": "苹果", "phonetic": "/ˈæpl/"},
+  {"en": "banana", "cn": "香蕉", "phonetic": "/bəˈnɑːnə/"}
+]</pre>
+        </div>
+        <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="importBookWords()">开始导入</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/utils.js?v=4"></script>
   <script>
     // 检查登录权限
     if (!checkAuth('admin')) {
@@ -347,6 +538,9 @@
     // 当前页码
     let wordPage = 1;
     let teacherPage = 1;
+    let bookPage = 1;
+    let currentBookId = '';
+    let bookWordPage = 1;
 
     // 切换标签页
     document.querySelectorAll('.sidebar-menu li[data-tab]').forEach(li => {
@@ -366,6 +560,8 @@
           loadWords();
         } else if (this.dataset.tab === 'teachers') {
           loadTeachers();
+        } else if (this.dataset.tab === 'books') {
+          loadBooks();
         }
       });
     });
@@ -646,6 +842,255 @@
         }
         document.getElementById('teacherStudentsList').innerHTML = html;
         document.getElementById('studentModal').classList.add('active');
+      }
+    }
+
+    // ==================== 词书管理 ====================
+    
+    // 加载词书列表
+    async function loadBooks(page = 1) {
+      bookPage = page;
+      const grade = document.getElementById('bookGradeFilter').value;
+      const keyword = document.getElementById('bookKeyword').value;
+      
+      const res = await http.get(`/admin/books/list?page=${page}&size=10&grade=${grade}&keyword=${encodeURIComponent(keyword)}`);
+      if (res.code === 200) {
+        const { list, total } = res.data;
+        let html = '';
+        list.forEach((book, index) => {
+          html += `
+            <tr>
+              <td>${(page - 1) * 10 + index + 1}</td>
+              <td><a href="javascript:void(0)" onclick="showBookWords('${book._id}', '${book.name}')" style="color: var(--primary-color); font-weight: 500;">📖 ${book.name}</a></td>
+              <td>${gradeMap[book.grade]}</td>
+              <td>${book.semester}册</td>
+              <td>${book.publisher}</td>
+              <td>${book.wordCount || 0}</td>
+              <td><span class="badge ${book.status === 1 ? 'badge-success' : 'badge-danger'}">${book.status === 1 ? '启用' : '禁用'}</span></td>
+              <td>
+                <button class="btn btn-sm btn-secondary" onclick="showBookWords('${book._id}', '${book.name}')">查看单词</button>
+                <button class="btn btn-sm btn-secondary" onclick="editBook('${book._id}')">编辑</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteBook('${book._id}')">删除</button>
+              </td>
+            </tr>
+          `;
+        });
+        document.getElementById('bookList').innerHTML = html || '<tr><td colspan="8" style="text-align: center;">暂无数据</td></tr>';
+        
+        const totalPages = Math.ceil(total / 10);
+        renderPagination(document.getElementById('bookPagination'), page, totalPages, loadBooks);
+      }
+    }
+    
+    // 显示新增词书弹窗
+    function showAddBookModal() {
+      document.getElementById('bookModalTitle').textContent = '新增词书';
+      document.getElementById('bookId').value = '';
+      document.getElementById('bookName').value = '';
+      document.getElementById('bookGrade').value = '1';
+      document.getElementById('bookSemester').value = '上';
+      document.getElementById('bookPublisher').value = '外研社';
+      document.getElementById('bookDescription').value = '';
+      document.getElementById('bookModal').classList.add('active');
+    }
+    
+    // 编辑词书
+    async function editBook(id) {
+      const res = await http.get(`/admin/books/detail?id=${id}`);
+      if (res.code === 200) {
+        const book = res.data;
+        document.getElementById('bookModalTitle').textContent = '编辑词书';
+        document.getElementById('bookId').value = book._id;
+        document.getElementById('bookName').value = book.name;
+        document.getElementById('bookGrade').value = book.grade;
+        document.getElementById('bookSemester').value = book.semester;
+        document.getElementById('bookPublisher').value = book.publisher;
+        document.getElementById('bookDescription').value = book.description || '';
+        document.getElementById('bookModal').classList.add('active');
+      }
+    }
+    
+    // 保存词书
+    document.getElementById('bookForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const id = document.getElementById('bookId').value;
+      const data = {
+        name: document.getElementById('bookName').value.trim(),
+        grade: parseInt(document.getElementById('bookGrade').value),
+        semester: document.getElementById('bookSemester').value,
+        publisher: document.getElementById('bookPublisher').value,
+        description: document.getElementById('bookDescription').value.trim()
+      };
+      
+      let res;
+      if (id) {
+        data.id = id;
+        res = await http.put('/admin/books/edit', data);
+      } else {
+        res = await http.post('/admin/books/add', data);
+      }
+      
+      if (res.code === 200) {
+        showToast(res.msg);
+        closeModal('bookModal');
+        loadBooks(bookPage);
+      } else {
+        showToast(res.msg, 'error');
+      }
+    });
+    
+    // 删除词书
+    async function deleteBook(id) {
+      if (!confirm('确定要删除这个词书吗？词书中的所有单词也会被删除！')) return;
+      
+      const res = await http.delete(`/admin/books/del?id=${id}`);
+      if (res.code === 200) {
+        showToast('删除成功');
+        loadBooks(bookPage);
+      } else {
+        showToast(res.msg, 'error');
+      }
+    }
+    
+    // 显示词书单词列表
+    async function showBookWords(bookId, bookName) {
+      currentBookId = bookId;
+      document.getElementById('bookWordsTitle').textContent = `📖 ${bookName} - 单词列表`;
+      bookWordPage = 1;
+      await loadBookWords();
+      document.getElementById('bookWordsModal').classList.add('active');
+    }
+    
+    // 加载词书单词
+    async function loadBookWords(page = 1) {
+      bookWordPage = page;
+      const res = await http.get(`/admin/books/words?bookId=${currentBookId}&page=${page}&size=20`);
+      if (res.code === 200) {
+        const { list, total } = res.data;
+        let html = '';
+        list.forEach((word, index) => {
+          html += `
+            <tr>
+              <td>${(page - 1) * 20 + index + 1}</td>
+              <td style="font-weight: 500;">${word.en}</td>
+              <td style="color: #888;">${word.phonetic || '-'}</td>
+              <td>${word.cn}</td>
+              <td>
+                <button class="btn btn-sm btn-secondary" onclick="editBookWord('${word._id}', '${word.en}', '${word.cn}', '${(word.phonetic || '').replace(/'/g, "\\'")}')">编辑</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteBookWord('${word._id}')">删除</button>
+              </td>
+            </tr>
+          `;
+        });
+        document.getElementById('bookWordsList').innerHTML = html || '<tr><td colspan="5" style="text-align: center;">暂无单词</td></tr>';
+        
+        const totalPages = Math.ceil(total / 20);
+        renderPagination(document.getElementById('bookWordsPagination'), page, totalPages, loadBookWords);
+      }
+    }
+    
+    // 显示添加单词弹窗
+    function showAddBookWordModal() {
+      document.getElementById('bookWordModalTitle').textContent = '添加单词';
+      document.getElementById('bookWordId').value = '';
+      document.getElementById('currentBookId').value = currentBookId;
+      document.getElementById('bookWordEn').value = '';
+      document.getElementById('bookWordPhonetic').value = '';
+      document.getElementById('bookWordCn').value = '';
+      document.getElementById('bookWordModal').classList.add('active');
+    }
+    
+    // 编辑词书单词
+    function editBookWord(id, en, cn, phonetic) {
+      document.getElementById('bookWordModalTitle').textContent = '编辑单词';
+      document.getElementById('bookWordId').value = id;
+      document.getElementById('currentBookId').value = currentBookId;
+      document.getElementById('bookWordEn').value = en;
+      document.getElementById('bookWordPhonetic').value = phonetic;
+      document.getElementById('bookWordCn').value = cn;
+      document.getElementById('bookWordModal').classList.add('active');
+    }
+    
+    // 保存词书单词
+    document.getElementById('bookWordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const id = document.getElementById('bookWordId').value;
+      const data = {
+        bookId: currentBookId,
+        en: document.getElementById('bookWordEn').value.trim(),
+        cn: document.getElementById('bookWordCn').value.trim(),
+        phonetic: document.getElementById('bookWordPhonetic').value.trim()
+      };
+      
+      let res;
+      if (id) {
+        data.id = id;
+        res = await http.put('/admin/books/words/edit', data);
+      } else {
+        res = await http.post('/admin/books/words/add', data);
+      }
+      
+      if (res.code === 200) {
+        showToast(res.msg);
+        closeModal('bookWordModal');
+        loadBookWords(bookWordPage);
+      } else {
+        showToast(res.msg, 'error');
+      }
+    });
+    
+    // 删除词书单词
+    async function deleteBookWord(id) {
+      if (!confirm('确定要删除这个单词吗？')) return;
+      
+      const res = await http.delete(`/admin/books/words/del?id=${id}`);
+      if (res.code === 200) {
+        showToast('删除成功');
+        loadBookWords(bookWordPage);
+      } else {
+        showToast(res.msg, 'error');
+      }
+    }
+    
+    // 显示批量导入弹窗
+    function showImportBookWordsModal() {
+      document.getElementById('importBookWordsFile').value = '';
+      document.getElementById('importBookWordsModal').classList.add('active');
+    }
+    
+    // 批量导入词书单词
+    async function importBookWords() {
+      const file = document.getElementById('importBookWordsFile').files[0];
+      if (!file) {
+        showToast('请选择文件', 'error');
+        return;
+      }
+      
+      try {
+        const text = await file.text();
+        const words = JSON.parse(text);
+        
+        if (!Array.isArray(words)) {
+          showToast('JSON格式错误，应该是数组', 'error');
+          return;
+        }
+        
+        const res = await http.post('/admin/books/words/import', {
+          bookId: currentBookId,
+          words: words
+        });
+        
+        if (res.code === 200) {
+          showToast(res.data.msg);
+          closeModal('importBookWordsModal');
+          loadBookWords();
+        } else {
+          showToast(res.msg, 'error');
+        }
+      } catch (err) {
+        showToast('文件解析失败，请检查JSON格式', 'error');
       }
     }
 

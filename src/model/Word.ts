@@ -2,10 +2,12 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 // 单词接口定义
 export interface IWord extends Document {
-  en: string;
-  cn: string;
-  phonetic?: string; // 音标
-  grade: number; // 1-6
+  en: string;             // 英文单词
+  cn: string;             // 中文释义
+  phonetic?: string;      // 音标
+  grade: number;          // 年级 1-6
+  bookId?: mongoose.Types.ObjectId;  // 所属词书ID
+  bookName?: string;      // 所属词书名称（冗余字段，方便查询）
   createTime: Date;
   updateTime: Date;
 }
@@ -35,6 +37,15 @@ const WordSchema: Schema = new Schema(
       min: 1,
       max: 6,
     },
+    bookId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Book',
+      required: false,
+    },
+    bookName: {
+      type: String,
+      trim: true,
+    },
   },
   {
     timestamps: {
@@ -45,7 +56,8 @@ const WordSchema: Schema = new Schema(
   }
 );
 
-// 创建复合索引（年级+单词）
+// 创建复合索引
 WordSchema.index({ grade: 1, en: 1 });
+WordSchema.index({ bookId: 1 });
 
 export default mongoose.model<IWord>('Word', WordSchema);

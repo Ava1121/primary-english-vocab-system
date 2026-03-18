@@ -6,6 +6,7 @@ import { LessonService } from './LessonService';
 import { WeakWordService } from './WeakWordService';
 import { DictationService } from './DictationService';
 import { StatisticsService } from './StatisticsService';
+import { BookService } from './BookService';
 
 export {
   AuthService,
@@ -16,4 +17,5 @@ export {
   WeakWordService,
   DictationService,
   StatisticsService,
+  BookService,
 };
